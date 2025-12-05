@@ -1,0 +1,589 @@
+import { createClient } from '@supabase/supabase-js';
+import 'react-native-url-polyfill/auto';
+
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+// Check if environment variables are properly set
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Missing Supabase environment variables. Please check your .env file.');
+  console.error('Required variables:');
+  console.error('- EXPO_PUBLIC_SUPABASE_URL');
+  console.error('- EXPO_PUBLIC_SUPABASE_ANON_KEY');
+} else {
+  console.log('✅ Supabase configuration loaded:');
+  console.log('URL:', supabaseUrl);
+  console.log('Key:', supabaseAnonKey?.substring(0, 20) + '...');
+}
+
+// Create client with fallback values to prevent crashes
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key',
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+      debug: true,
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'padel-master-app',
+      },
+    },
+});
+
+// Helper function to check if Supabase is properly configured
+export const isSupabaseConfigured = () => {
+  const isConfigured = !!(supabaseUrl && supabaseAnonKey &&
+    supabaseUrl !== 'https://placeholder.supabase.co' &&
+    supabaseAnonKey !== 'placeholder-key');
+
+  console.log('🔧 isSupabaseConfigured check:', {
+    isConfigured,
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+    urlIsValid: supabaseUrl !== 'https://placeholder.supabase.co',
+    keyIsValid: supabaseAnonKey !== 'placeholder-key'
+  });
+
+  return isConfigured;
+};
+
+// Types générés automatiquement depuis la base de données
+export interface Division {
+  id: number;
+  nom: { [key: string]: string };
+  description: { [key: string]: string };
+  niveau: number;
+  points_minimum: number;
+  points_maximum: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Club {
+  id: number;
+  nom: string;
+  pays: string;
+  ville: string;
+  latitude?: number;
+  longitude?: number;
+  statut: 'valide' | 'en_attente' | 'rejete';
+  date_creation: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Joueur {
+  id: string;
+  nom_complet: string;
+  date_naissance: string;
+  sexe: 'M' | 'F';
+  club_id: number;
+  points_classement: number;
+  division_id: number;
+  position_gps?: { latitude: number; longitude: number };
+  preference_langue: string;
+  confidentialite: {
+    masquer_position: boolean;
+    masquer_profil: boolean;
+    statut_en_ligne: boolean;
+  };
+  badges: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Match {
+  id: number;
+  joueur1_id: string;
+  joueur2_id: string;
+  joueur3_id: string;
+  joueur4_id: string;
+  score: string;
+  statut: 'en_attente' | 'valide' | 'conteste';
+  date_match: string;
+  validations: Record<string, boolean>;
+  duree_minutes?: number;
+  equipe1_gagnante?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Ligue {
+  id: number;
+  nom: string;
+  description?: string;
+  format: 'americano' | 'paires_fixes';
+  nombre_joueurs: number;
+  joueurs_ids: string[];
+  statut: 'active' | 'terminee' | 'en_attente';
+  createur_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Defi {
+  id: number;
+  expediteur_id: string;
+  destinataire_id: string;
+  expediteur?: any;
+  destinataire?: any;
+  message?: string;
+  statut: 'en_attente' | 'accepte' | 'refuse' | 'expire';
+  date_expiration: string;
+  equipe1_joueur1_id?: string;
+  equipe1_joueur2_id?: string;
+  equipe2_joueur1_id?: string;
+  equipe2_joueur2_id?: string;
+  score_equipe1?: number;
+  score_equipe2?: number;
+  equipe1_joueur1?: any;
+  equipe1_joueur2?: any;
+  equipe2_joueur1?: any;
+  equipe2_joueur2?: any;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Sanction {
+  id: number;
+  joueur_id: string;
+  type_sanction: 'avertissement' | 'suspension_temporaire' | 'suspension_longue' | 'bannissement';
+  duree_heures?: number;
+  raison: string;
+  date_debut: string;
+  date_fin?: string;
+  admin_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Notification {
+  id: number;
+  destinataire_id: string;
+  type: string;
+  titre: string;
+  message: string;
+  donnees: Record<string, any>;
+  lu: boolean;
+  date_expiration?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Fonctions utilitaires pour les requêtes
+export const getDivisions = async () => {
+  const { data, error } = await supabase
+    .from('divisions')
+    .select('*')
+    .order('niveau');
+  
+  if (error) throw error;
+  return data as Division[];
+};
+
+export const getClubs = async () => {
+  const { data, error } = await supabase
+    .from('clubs')
+    .select('*')
+    .eq('statut', 'valide')
+    .order('nom');
+  
+  if (error) throw error;
+  return data as Club[];
+};
+
+export const getJoueurs = async (filters?: {
+  rayon_km?: number;
+  division_id?: number;
+  langue?: string;
+}) => {
+  let query = supabase
+    .from('joueurs')
+    .select('*');
+
+  if (filters?.division_id) {
+    query = query.eq('division_id', filters.division_id);
+  }
+
+  if (filters?.langue) {
+    query = query.eq('preference_langue', filters.langue);
+  }
+
+  const { data: joueurs, error } = await query.order('points_classement', { ascending: false });
+
+  if (error) throw error;
+  if (!joueurs || joueurs.length === 0) return [];
+
+  const clubIds = [...new Set(joueurs.map((j: any) => j.club_id).filter(Boolean))];
+  const divisionIds = [...new Set(joueurs.map((j: any) => j.division_id).filter(Boolean))];
+
+  const [clubs, divisions] = await Promise.all([
+    clubIds.length > 0
+      ? supabase.from('clubs').select('*').in('id', clubIds).then(r => r.data || [])
+      : Promise.resolve([]),
+    divisionIds.length > 0
+      ? supabase.from('divisions').select('*').in('id', divisionIds).then(r => r.data || [])
+      : Promise.resolve([])
+  ]);
+
+  return joueurs.map((j: any) => ({
+    ...j,
+    club: clubs.find((c: any) => c.id === j.club_id) || null,
+    division: divisions.find((d: any) => d.id === j.division_id) || null
+  }));
+};
+
+export const createDefi = async (defi: {
+  expediteur_id: string;
+  destinataire_id: string;
+  message?: string;
+}) => {
+  const { data, error } = await supabase
+    .from('defis')
+    .insert(defi)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data as Defi;
+};
+
+export const updateDefiStatut = async (defi_id: number, statut: 'accepte' | 'refuse') => {
+  console.log('📡 updateDefiStatut DÉBUT - defi_id:', defi_id, 'statut:', statut);
+
+  try {
+    const { data, error } = await supabase
+      .from('defis')
+      .update({ statut, updated_at: new Date().toISOString() })
+      .eq('id', defi_id)
+      .select()
+      .single();
+
+    console.log('📡 updateDefiStatut RÉPONSE:');
+    console.log('  - data:', JSON.stringify(data, null, 2));
+    console.log('  - error:', JSON.stringify(error, null, 2));
+
+    if (error) {
+      console.error('❌ Erreur Supabase:', error);
+      throw error;
+    }
+
+    console.log('✅ updateDefiStatut SUCCESS');
+    return data as Defi;
+  } catch (e: any) {
+    console.error('❌ Exception dans updateDefiStatut:', e);
+    throw e;
+  }
+};
+
+export const createMatch = async (match: {
+  joueur1_id: string;
+  joueur2_id: string;
+  joueur3_id: string;
+  joueur4_id: string;
+  score: string;
+  equipe1_gagnante: boolean;
+  duree_minutes?: number;
+}) => {
+  const { data, error } = await supabase
+    .from('matchs')
+    .insert({
+      ...match,
+      statut: 'valide',
+      date_match: new Date().toISOString(),
+      validations: {}
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Match;
+};
+
+export const getNotifications = async (joueur_id: string) => {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('destinataire_id', joueur_id)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data as Notification[];
+};
+
+export const markNotificationAsRead = async (notification_id: number) => {
+  const { data, error } = await supabase
+    .from('notifications')
+    .update({ lu: true, updated_at: new Date().toISOString() })
+    .eq('id', notification_id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Notification;
+};
+
+export const getPlayerStats = async (joueur_id: string) => {
+  const { data: joueur, error: joueurError } = await supabase
+    .from('joueurs')
+    .select('victoires, defaites, matchs_joues')
+    .eq('id', joueur_id)
+    .maybeSingle();
+
+  if (joueurError) throw joueurError;
+
+  const { data: defisActifs, error: defisError } = await supabase
+    .from('defis')
+    .select('*')
+    .or(`expediteur_id.eq.${joueur_id},destinataire_id.eq.${joueur_id}`)
+    .in('statut', ['en_attente', 'accepte']);
+
+  if (defisError) throw defisError;
+
+  const { data: ligues, error: liguesError } = await supabase
+    .from('ligues_joueurs')
+    .select('*')
+    .eq('joueur_id', joueur_id);
+
+  if (liguesError) throw liguesError;
+
+  return {
+    victoires: joueur?.victoires || 0,
+    defisActifs: defisActifs?.length || 0,
+    ligues: ligues?.length || 0,
+  };
+};
+
+export const getRecentActivity = async (joueur_id: string) => {
+  const { data: recentMatches, error: matchsError } = await supabase
+    .from('matchs')
+    .select('*')
+    .or(`joueur1_id.eq.${joueur_id},joueur2_id.eq.${joueur_id},joueur3_id.eq.${joueur_id},joueur4_id.eq.${joueur_id}`)
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  if (matchsError) {
+    console.error('Error in getRecentActivity (matchs):', matchsError);
+    return { matches: [], defis: [] };
+  }
+
+  const joueurIdsFromMatches = new Set<string>();
+  (recentMatches || []).forEach((match: any) => {
+    if (match.joueur1_id) joueurIdsFromMatches.add(match.joueur1_id);
+    if (match.joueur2_id) joueurIdsFromMatches.add(match.joueur2_id);
+    if (match.joueur3_id) joueurIdsFromMatches.add(match.joueur3_id);
+    if (match.joueur4_id) joueurIdsFromMatches.add(match.joueur4_id);
+  });
+
+  const { data: recentDefis, error: defisError } = await supabase
+    .from('defis')
+    .select('*')
+    .eq('destinataire_id', joueur_id)
+    .eq('statut', 'en_attente')
+    .order('created_at', { ascending: false })
+    .limit(2);
+
+  if (defisError) {
+    console.error('Error in getRecentActivity (defis):', defisError);
+  }
+
+  (recentDefis || []).forEach((defi: any) => {
+    if (defi.expediteur_id) joueurIdsFromMatches.add(defi.expediteur_id);
+    if (defi.destinataire_id) joueurIdsFromMatches.add(defi.destinataire_id);
+  });
+
+  const { data: joueurs } = joueurIdsFromMatches.size > 0
+    ? await supabase
+        .from('joueurs')
+        .select('id, nom_complet')
+        .in('id', Array.from(joueurIdsFromMatches))
+    : { data: [] };
+
+  const joueursMap = new Map(joueurs?.map((j: any) => [j.id, j]) || []);
+
+  const matchesWithNames = (recentMatches || []).map((match: any) => ({
+    ...match,
+    joueur1: joueursMap.get(match.joueur1_id) || null,
+    joueur2: joueursMap.get(match.joueur2_id) || null,
+    joueur3: joueursMap.get(match.joueur3_id) || null,
+    joueur4: joueursMap.get(match.joueur4_id) || null,
+  }));
+
+  const defisWithNames = (recentDefis || []).map((defi: any) => ({
+    ...defi,
+    expediteur: joueursMap.get(defi.expediteur_id) || null,
+    destinataire: joueursMap.get(defi.destinataire_id) || null,
+  }));
+
+  return {
+    matches: matchesWithNames,
+    defis: defisWithNames,
+  };
+};
+
+export const getLigues = async () => {
+  const { data, error } = await supabase
+    .from('ligues')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data as Ligue[];
+};
+
+export const getPlayerLigues = async (joueur_id: string) => {
+  const { data: liguesJoueurs, error: ljError } = await supabase
+    .from('ligues_joueurs')
+    .select('*')
+    .eq('joueur_id', joueur_id);
+
+  if (ljError) throw ljError;
+  if (!liguesJoueurs || liguesJoueurs.length === 0) return [];
+
+  const ligueIds = liguesJoueurs.map((lj: any) => lj.ligue_id);
+  const { data: ligues, error: liguesError } = await supabase
+    .from('ligues')
+    .select('*')
+    .in('id', ligueIds);
+
+  if (liguesError) throw liguesError;
+
+  return liguesJoueurs.map((lj: any) => ({
+    ...lj,
+    ligue: ligues?.find((l: any) => l.id === lj.ligue_id) || null
+  }));
+};
+
+export const getLeagueStats = async (joueur_id: string) => {
+  const playerLigues = await getPlayerLigues(joueur_id);
+
+  const { data: allMatches, error: matchsError } = await supabase
+    .from('matchs')
+    .select('*')
+    .or(`joueur1_id.eq.${joueur_id},joueur2_id.eq.${joueur_id},joueur3_id.eq.${joueur_id},joueur4_id.eq.${joueur_id}`);
+
+  if (matchsError) throw matchsError;
+
+  let totalWins = 0;
+  allMatches?.forEach((match) => {
+    const isEquipe1 = match.joueur1_id === joueur_id || match.joueur2_id === joueur_id;
+    if ((isEquipe1 && match.equipe1_gagnante) || (!isEquipe1 && !match.equipe1_gagnante)) {
+      totalWins++;
+    }
+  });
+
+  const totalMatches = allMatches?.length || 0;
+  const winRate = totalMatches > 0 ? Math.round((totalWins / totalMatches) * 100) : 0;
+
+  const positions = playerLigues?.map((pl: any) => pl.position || 999).filter((p: number) => p !== 999);
+  const bestPosition = positions && positions.length > 0 ? Math.min(...positions) : 0;
+
+  const totalPoints = playerLigues?.reduce((sum: number, pl: any) => sum + (pl.points || 0), 0) || 0;
+
+  return {
+    totalWins,
+    totalMatches,
+    winRate,
+    bestPosition,
+    totalPoints,
+  };
+};
+
+export const getDefis = async (joueur_id: string) => {
+  const { data: defis, error } = await supabase
+    .from('defis')
+    .select('*')
+    .or(`expediteur_id.eq.${joueur_id},destinataire_id.eq.${joueur_id}`)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  if (!defis || defis.length === 0) return [];
+
+  const joueurIds = new Set<string>();
+  defis.forEach((defi: any) => {
+    if (defi.expediteur_id) joueurIds.add(defi.expediteur_id);
+    if (defi.destinataire_id) joueurIds.add(defi.destinataire_id);
+    if (defi.equipe1_joueur1_id) joueurIds.add(defi.equipe1_joueur1_id);
+    if (defi.equipe1_joueur2_id) joueurIds.add(defi.equipe1_joueur2_id);
+    if (defi.equipe2_joueur1_id) joueurIds.add(defi.equipe2_joueur1_id);
+    if (defi.equipe2_joueur2_id) joueurIds.add(defi.equipe2_joueur2_id);
+  });
+
+  const { data: joueurs } = await supabase
+    .from('joueurs')
+    .select('id, nom_complet')
+    .in('id', Array.from(joueurIds));
+
+  const joueursMap = new Map(joueurs?.map((j: any) => [j.id, j]) || []);
+
+  return defis.map((defi: any) => ({
+    ...defi,
+    expediteur: joueursMap.get(defi.expediteur_id) || null,
+    destinataire: joueursMap.get(defi.destinataire_id) || null,
+    equipe1_joueur1: joueursMap.get(defi.equipe1_joueur1_id) || null,
+    equipe1_joueur2: joueursMap.get(defi.equipe1_joueur2_id) || null,
+    equipe2_joueur1: joueursMap.get(defi.equipe2_joueur1_id) || null,
+    equipe2_joueur2: joueursMap.get(defi.equipe2_joueur2_id) || null,
+  }));
+};
+
+export const updateDefiTeamsAndScore = async (
+  defi_id: number,
+  teams: {
+    equipe1_joueur1_id: string;
+    equipe1_joueur2_id: string;
+    equipe2_joueur1_id: string;
+    equipe2_joueur2_id: string;
+    score_equipe1?: number;
+    score_equipe2?: number;
+  }
+) => {
+  const { data, error } = await supabase
+    .from('defis')
+    .update({ ...teams, updated_at: new Date().toISOString() })
+    .eq('id', defi_id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Defi;
+};
+
+export const completeDefiWithMatch = async (
+  defi_id: number,
+  matchData: {
+    equipe1_joueur1_id: string;
+    equipe1_joueur2_id: string;
+    equipe2_joueur1_id: string;
+    equipe2_joueur2_id: string;
+    score: string;
+    equipe1_gagnante: boolean;
+  }
+) => {
+  const match = await createMatch({
+    joueur1_id: matchData.equipe1_joueur1_id,
+    joueur2_id: matchData.equipe1_joueur2_id,
+    joueur3_id: matchData.equipe2_joueur1_id,
+    joueur4_id: matchData.equipe2_joueur2_id,
+    score: matchData.score,
+    equipe1_gagnante: matchData.equipe1_gagnante,
+  });
+
+  const { data, error } = await supabase
+    .from('defis')
+    .update({
+      statut: 'termine',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', defi_id)
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return { match, defi: data as Defi | null };
+};
