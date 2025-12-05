@@ -1,5 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
-import 'react-native-url-polyfill/auto';
+import { Platform } from 'react-native';
+
+// Only import polyfill for native platforms, not web
+if (Platform.OS !== 'web') {
+  require('react-native-url-polyfill/auto');
+}
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -10,13 +15,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Required variables:');
   console.error('- EXPO_PUBLIC_SUPABASE_URL');
   console.error('- EXPO_PUBLIC_SUPABASE_ANON_KEY');
+  console.error('Current values:', {
+    url: supabaseUrl || 'undefined',
+    key: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 10)}...` : 'undefined'
+  });
 } else {
   console.log('✅ Supabase configuration loaded:');
   console.log('URL:', supabaseUrl);
   console.log('Key:', supabaseAnonKey?.substring(0, 20) + '...');
+  console.log('Platform:', Platform.OS);
 }
 
 // Create client with fallback values to prevent crashes
+const storage = Platform.OS === 'web' && typeof window !== 'undefined' 
+  ? window.localStorage 
+  : undefined;
+
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-key',
@@ -24,15 +38,17 @@ export const supabase = createClient(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: false,
-      debug: true,
+      detectSessionInUrl: Platform.OS === 'web', // Enable URL detection for web
+      debug: __DEV__,
+      ...(storage && { storage }), // Only add storage for web
     },
     global: {
       headers: {
         'X-Client-Info': 'padel-master-app',
       },
     },
-});
+  }
+);
 
 // Helper function to check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
@@ -529,6 +545,192 @@ export const getDefis = async (joueur_id: string) => {
     equipe2_joueur1: joueursMap.get(defi.equipe2_joueur1_id) || null,
     equipe2_joueur2: joueursMap.get(defi.equipe2_joueur2_id) || null,
   }));
+};
+
+// Fonctions de classement
+export const getPlayerRankingInDivision = async (joueur_id: string, division_id: number) => {
+  // Récupérer tous les joueurs de la division triés par points
+  const { data: joueurs, error } = await supabase
+    .from('joueurs')
+    .select('id, nom_complet, points_classement')
+    .eq('division_id', division_id)
+    .order('points_classement', { ascending: false });
+
+  if (error) throw error;
+  if (!joueurs || joueurs.length === 0) return null;
+
+  const position = joueurs.findIndex(j => j.id === joueur_id) + 1;
+  return {
+    position,
+    total: joueurs.length,
+    division_id
+  };
+};
+
+export const getPlayerRankingInAllDivisions = async (joueur_id: string) => {
+  // Récupérer les points du joueur
+  const { data: joueur, error: joueurError } = await supabase
+    .from('joueurs')
+    .select('points_classement, division_id')
+    .eq('id', joueur_id)
+    .maybeSingle();
+
+  if (joueurError) throw joueurError;
+  if (!joueur) return [];
+
+  // Récupérer toutes les divisions
+  const { data: divisions, error: divisionsError } = await supabase
+    .from('divisions')
+    .select('*')
+    .order('niveau', { ascending: true });
+
+  if (divisionsError) throw divisionsError;
+  if (!divisions) return [];
+
+  // Pour chaque division, calculer la position du joueur
+  const rankings = await Promise.all(
+    divisions.map(async (division) => {
+      const { data: joueursInDivision, error } = await supabase
+        .from('joueurs')
+        .select('id, points_classement')
+        .gte('points_classement', division.points_minimum)
+        .lte('points_classement', division.points_maximum)
+        .order('points_classement', { ascending: false });
+
+      if (error) return null;
+
+      const position = joueursInDivision?.findIndex(j => j.id === joueur_id) ?? -1;
+      const isInDivision = joueur.division_id === division.id;
+
+      return {
+        division: {
+          id: division.id,
+          nom: division.nom,
+          niveau: division.niveau,
+          points_minimum: division.points_minimum,
+          points_maximum: division.points_maximum
+        },
+        position: position >= 0 ? position + 1 : null,
+        total: joueursInDivision?.length || 0,
+        isCurrentDivision: isInDivision,
+        canReach: joueur.points_classement >= division.points_minimum && joueur.points_classement <= division.points_maximum
+      };
+    })
+  );
+
+  return rankings.filter(r => r !== null);
+};
+
+export const getPlayerRankingInClub = async (joueur_id: string) => {
+  // Récupérer le club du joueur
+  const { data: joueur, error: joueurError } = await supabase
+    .from('joueurs')
+    .select('club_id, points_classement')
+    .eq('id', joueur_id)
+    .maybeSingle();
+
+  if (joueurError) throw joueurError;
+  if (!joueur || !joueur.club_id) return null;
+
+  // Récupérer tous les joueurs du club
+  const { data: joueursClub, error } = await supabase
+    .from('joueurs')
+    .select('id, nom_complet, points_classement')
+    .eq('club_id', joueur.club_id)
+    .order('points_classement', { ascending: false });
+
+  if (error) throw error;
+  if (!joueursClub || joueursClub.length === 0) return null;
+
+  const position = joueursClub.findIndex(j => j.id === joueur_id) + 1;
+  return {
+    position,
+    total: joueursClub.length,
+    club_id: joueur.club_id
+  };
+};
+
+export const getPlayerRankingGlobal = async (joueur_id: string) => {
+  // Récupérer tous les joueurs triés par points
+  const { data: joueurs, error } = await supabase
+    .from('joueurs')
+    .select('id, nom_complet, points_classement')
+    .order('points_classement', { ascending: false });
+
+  if (error) throw error;
+  if (!joueurs || joueurs.length === 0) return null;
+
+  const position = joueurs.findIndex(j => j.id === joueur_id) + 1;
+  return {
+    position,
+    total: joueurs.length
+  };
+};
+
+export const getPlayerRankingInLigue = async (joueur_id: string, ligue_id: number) => {
+  // Récupérer les stats de la ligue pour ce joueur
+  const { data: ligueJoueur, error } = await supabase
+    .from('ligues_joueurs')
+    .select('position, points, victoires, defaites, matchs_joues')
+    .eq('joueur_id', joueur_id)
+    .eq('ligue_id', ligue_id)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!ligueJoueur) return null;
+
+  // Récupérer le nombre total de joueurs dans la ligue
+  const { count, error: countError } = await supabase
+    .from('ligues_joueurs')
+    .select('*', { count: 'exact', head: true })
+    .eq('ligue_id', ligue_id);
+
+  if (countError) throw countError;
+
+  return {
+    position: ligueJoueur.position || null,
+    total: count || 0,
+    points: ligueJoueur.points || 0,
+    victoires: ligueJoueur.victoires || 0,
+    defaites: ligueJoueur.defaites || 0,
+    matchs_joues: ligueJoueur.matchs_joues || 0
+  };
+};
+
+export const createDefiInLigue = async (defi: {
+  ligue_id: number;
+  expediteur_id: string;
+  destinataire_id: string;
+  message?: string;
+}) => {
+  // Vérifier que les deux joueurs sont dans la ligue
+  const { data: ligueJoueurs, error: checkError } = await supabase
+    .from('ligues_joueurs')
+    .select('ligue_id')
+    .eq('ligue_id', defi.ligue_id)
+    .in('joueur_id', [defi.expediteur_id, defi.destinataire_id]);
+
+  if (checkError) throw checkError;
+  if (!ligueJoueurs || ligueJoueurs.length !== 2) {
+    throw new Error('Les deux joueurs doivent être dans la ligue');
+  }
+
+  // Créer le défi avec la référence à la ligue
+  const { data, error } = await supabase
+    .from('defis')
+    .insert({
+      expediteur_id: defi.expediteur_id,
+      destinataire_id: defi.destinataire_id,
+      message: defi.message || 'Défi de ligue',
+      statut: 'en_attente',
+      date_expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      // On pourrait ajouter un champ ligue_id dans defis si nécessaire
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Defi;
 };
 
 export const updateDefiTeamsAndScore = async (

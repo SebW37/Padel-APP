@@ -50,16 +50,55 @@ export default function TeamScoreModal({ visible, defiId, expediteurId, destinat
         setEquipe1Joueur1(expediteurId);
         setEquipe2Joueur1(destinataireId);
       }
+    } else {
+      // Réinitialiser la recherche quand le modal se ferme
+      setPickerSearch('');
     }
   }, [visible, expediteurId, destinataireId]);
 
   const loadJoueurs = async () => {
     setLoading(true);
     try {
-      const data = await getJoueurs({});
-      setJoueurs(data || []);
+      console.log('🔄 Chargement des joueurs...');
+      
+      // Charger directement depuis Supabase (plus rapide, pas besoin de clubs/divisions pour le picker)
+      const { supabase } = require('@/lib/supabase-rn');
+      const { data: joueursData, error: supabaseError } = await supabase
+        .from('joueurs')
+        .select('id, nom_complet')
+        .order('nom_complet')
+        .limit(200); // Limiter à 200 joueurs max
+      
+      if (supabaseError) {
+        throw supabaseError;
+      }
+      
+      if (joueursData) {
+        console.log(`✅ ${joueursData.length} joueur(s) chargé(s)`);
+        // Formater pour correspondre à l'interface Joueur attendue
+        setJoueurs(joueursData.map((j: any) => ({
+          id: j.id,
+          nom_complet: j.nom_complet,
+          date_naissance: '',
+          sexe: 'M' as const,
+          club_id: 0,
+          points_classement: 0,
+          division_id: 0,
+          preference_langue: 'fr',
+          confidentialite: { masquer_position: false, masquer_profil: false, statut_en_ligne: true },
+          badges: [],
+          created_at: '',
+          updated_at: '',
+          club: null,
+          division: null
+        })));
+      } else {
+        setJoueurs([]);
+      }
     } catch (error) {
-      console.error('Erreur chargement joueurs:', error);
+      console.error('❌ Erreur chargement joueurs:', error);
+      alert('Erreur lors du chargement des joueurs. Vérifiez votre connexion.');
+      setJoueurs([]);
     } finally {
       setLoading(false);
     }
@@ -109,7 +148,16 @@ export default function TeamScoreModal({ visible, defiId, expediteurId, destinat
 
     setSaving(true);
     try {
-      await completeDefiWithMatch(defiId, {
+      console.log('💾 Début de la sauvegarde du match...');
+      console.log('📋 Données:', {
+        defiId,
+        equipe1: [equipe1Joueur1, equipe1Joueur2],
+        equipe2: [equipe2Joueur1, equipe2Joueur2],
+        score: scoreString,
+        equipe1Gagnante: equipe1Gagnante
+      });
+      
+      const result = await completeDefiWithMatch(defiId, {
         equipe1_joueur1_id: equipe1Joueur1,
         equipe1_joueur2_id: equipe1Joueur2,
         equipe2_joueur1_id: equipe2Joueur1,
@@ -117,12 +165,20 @@ export default function TeamScoreModal({ visible, defiId, expediteurId, destinat
         score: scoreString,
         equipe1_gagnante: equipe1Gagnante,
       });
+      
+      console.log('✅ Match enregistré avec succès:', result);
       alert(`Match enregistré! ${equipe1Gagnante ? 'Équipe 1' : 'Équipe 2'} gagne`);
       onSave();
       resetForm();
-    } catch (error) {
-      console.error('Erreur sauvegarde:', error);
-      alert('Erreur lors de la sauvegarde');
+    } catch (error: any) {
+      console.error('❌ Erreur sauvegarde:', error);
+      console.error('❌ Détails erreur:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint
+      });
+      alert(`Erreur lors de la sauvegarde: ${error?.message || 'Erreur inconnue'}`);
     } finally {
       setSaving(false);
     }
@@ -139,12 +195,19 @@ export default function TeamScoreModal({ visible, defiId, expediteurId, destinat
     setSet2Equipe2('');
     setSet3Equipe1('');
     setSet3Equipe2('');
+    setPickerSearch('');
+    setShowEquipe1Joueur1Picker(false);
+    setShowEquipe1Joueur2Picker(false);
+    setShowEquipe2Joueur1Picker(false);
+    setShowEquipe2Joueur2Picker(false);
   };
 
   const getJoueurName = (id: string) => {
     const joueur = joueurs.find((j) => j.id === id);
     return joueur?.nom_complet || 'Sélectionner';
   };
+
+  const [pickerSearch, setPickerSearch] = useState('');
 
   const renderPlayerPicker = (
     visible: boolean,
@@ -154,31 +217,62 @@ export default function TeamScoreModal({ visible, defiId, expediteurId, destinat
   ) => {
     if (!visible) return null;
 
+    const filteredJoueurs = pickerSearch
+      ? joueurs.filter(j => 
+          j.nom_complet.toLowerCase().includes(pickerSearch.toLowerCase())
+        )
+      : joueurs;
+
     return (
       <View style={styles.pickerOverlay}>
         <View style={styles.pickerContainer}>
           <View style={styles.pickerHeader}>
             <Text style={styles.pickerTitle}>Sélectionner un joueur</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={() => {
+              setPickerSearch('');
+              onClose();
+            }}>
               <Ionicons name="close" size={24} color="#111827" />
             </TouchableOpacity>
           </View>
-          <ScrollView style={styles.pickerList}>
-            {joueurs.map((joueur) => (
-              <TouchableOpacity
-                key={joueur.id}
-                style={[
-                  styles.pickerItem,
-                  joueur.id === selectedId && styles.pickerItemSelected,
-                ]}
-                onPress={() => {
-                  onSelect(joueur.id);
-                  onClose();
-                }}
-              >
-                <Text style={styles.pickerItemText}>{joueur.nom_complet}</Text>
+          <View style={styles.pickerSearchContainer}>
+            <Ionicons name="search" size={20} color="#9ca3af" style={styles.pickerSearchIcon} />
+            <TextInput
+              style={styles.pickerSearchInput}
+              placeholder="Rechercher un joueur..."
+              value={pickerSearch}
+              onChangeText={setPickerSearch}
+              autoFocus
+            />
+            {pickerSearch.length > 0 && (
+              <TouchableOpacity onPress={() => setPickerSearch('')}>
+                <Ionicons name="close-circle" size={20} color="#9ca3af" />
               </TouchableOpacity>
-            ))}
+            )}
+          </View>
+          <ScrollView style={styles.pickerList}>
+            {filteredJoueurs.length > 0 ? (
+              filteredJoueurs.map((joueur) => (
+                <TouchableOpacity
+                  key={joueur.id}
+                  style={[
+                    styles.pickerItem,
+                    joueur.id === selectedId && styles.pickerItemSelected,
+                  ]}
+                  onPress={() => {
+                    onSelect(joueur.id);
+                    setPickerSearch('');
+                    onClose();
+                  }}
+                >
+                  <Text style={styles.pickerItemText}>{joueur.nom_complet}</Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={styles.pickerEmpty}>
+                <Text style={styles.pickerEmptyText}>Aucun joueur trouvé</Text>
+              </View>
+            )}
           </ScrollView>
         </View>
       </View>
@@ -505,6 +599,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#111827',
   },
+  pickerSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    backgroundColor: '#f9fafb',
+  },
+  pickerSearchIcon: {
+    marginRight: 8,
+  },
+  pickerSearchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#111827',
+    paddingVertical: 8,
+  },
   pickerList: {
     maxHeight: 400,
   },
@@ -519,6 +631,14 @@ const styles = StyleSheet.create({
   pickerItemText: {
     fontSize: 16,
     color: '#111827',
+  },
+  pickerEmpty: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  pickerEmptyText: {
+    fontSize: 16,
+    color: '#9ca3af',
   },
   scoreHint: {
     fontSize: 13,

@@ -5,11 +5,26 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "EXPO_NO_TELEMETRY=1 expo start",
+    "dev": "cross-env EXPO_NO_TELEMETRY=1 expo start --clear",
+    "web": "cross-env EXPO_NO_TELEMETRY=1 expo start --web --clear",
+    "android": "cross-env EXPO_NO_TELEMETRY=1 expo start --android",
+    "ios": "cross-env EXPO_NO_TELEMETRY=1 expo start --ios",
     "build:web": "expo export --platform web",
     "lint": "expo lint",
     "test:supabase": "tsx --no-esm scripts/test-supabase.ts",
-    "check:supabase": "tsx --no-esm scripts/check-supabase-connection.ts"
+    "check:supabase": "tsx --no-esm scripts/check-supabase-connection.ts",
+    "explore:supabase": "node scripts/explore-supabase.js",
+    "read:supabase": "node scripts/read-supabase-structure.js",
+    "query:supabase": "node scripts/query-supabase.js",
+    "check:match": "node scripts/check-last-match.js",
+    "find:player": "node scripts/find-player.js",
+    "check:elo": "node scripts/check-elo-matches.js",
+    "test:elo": "node scripts/test-elo-coefficient.js",
+    "estimate:first": "node scripts/estimate-victories-to-first.js",
+    "simulate:close": "node scripts/simulate-close-victories.js",
+    "test:new-elo": "node scripts/test-new-elo-system.js",
+    "seed:complete": "node scripts/seed-complete-database.js",
+    "seed:existing": "node scripts/seed-with-existing-users.js"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -48,6 +63,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
+    "cross-env": "^10.1.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
     "typescript": "~5.8.3"

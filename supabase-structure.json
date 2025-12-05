@@ -1,0 +1,776 @@
+{
+  "url": "https://rmvcsgdohzgiidaxmtnq.supabase.co",
+  "tables": {
+    "joueurs": {
+      "count": 30,
+      "columns": [
+        "id",
+        "nom_complet",
+        "date_naissance",
+        "sexe",
+        "club_id",
+        "points_classement",
+        "division_id",
+        "position_gps",
+        "preference_langue",
+        "confidentialite",
+        "badges",
+        "created_at",
+        "updated_at",
+        "victoires",
+        "defaites",
+        "matchs_joues"
+      ],
+      "sample": {
+        "id": "3b7d3d01-7b45-4ec9-a59c-360c4b4ce26f",
+        "nom_complet": "Sarah Johnson",
+        "date_naissance": "1993-08-25",
+        "sexe": "F",
+        "club_id": 6,
+        "points_classement": 1880,
+        "division_id": 7,
+        "position_gps": null,
+        "preference_langue": "en",
+        "confidentialite": {
+          "masquer_profil": false,
+          "statut_en_ligne": true,
+          "masquer_position": false
+        },
+        "badges": [],
+        "created_at": "2025-09-11T19:45:21.660699+00:00",
+        "updated_at": "2025-10-03T13:32:49.751333+00:00",
+        "victoires": 0,
+        "defaites": 4,
+        "matchs_joues": 4
+      },
+      "allData": [
+        {
+          "id": "3b7d3d01-7b45-4ec9-a59c-360c4b4ce26f",
+          "nom_complet": "Sarah Johnson",
+          "date_naissance": "1993-08-25",
+          "sexe": "F",
+          "club_id": 6,
+          "points_classement": 1880,
+          "division_id": 7,
+          "position_gps": null,
+          "preference_langue": "en",
+          "confidentialite": {
+            "masquer_profil": false,
+            "statut_en_ligne": true,
+            "masquer_position": false
+          },
+          "badges": [],
+          "created_at": "2025-09-11T19:45:21.660699+00:00",
+          "updated_at": "2025-10-03T13:32:49.751333+00:00",
+          "victoires": 0,
+          "defaites": 4,
+          "matchs_joues": 4
+        },
+        {
+          "id": "e574d0b2-58cd-47a3-a4ce-5a2daf7ce3de",
+          "nom_complet": "Maria Santos",
+          "date_naissance": "1992-05-12",
+          "sexe": "F",
+          "club_id": 4,
+          "points_classement": 1927,
+          "division_id": 7,
+          "position_gps": null,
+          "preference_langue": "es",
+          "confidentialite": {
+            "masquer_profil": false,
+            "statut_en_ligne": true,
+            "masquer_position": false
+          },
+          "badges": [],
+          "created_at": "2025-09-11T19:45:21.660699+00:00",
+          "updated_at": "2025-10-03T13:32:49.751333+00:00",
+          "victoires": 29,
+          "defaites": 18,
+          "matchs_joues": 47
+        },
+        {
+          "id": "141ed4c4-4282-46d3-8bc7-c3f6a97c85f2",
+          "nom_complet": "Sofia Rodriguez",
+          "date_naissance": "1990-07-22",
+          "sexe": "F",
+          "club_id": 2,
+          "points_classement": 4302,
+          "division_id": 10,
+          "position_gps": null,
+          "preference_langue": "es",
+          "confidentialite": {
+            "masquer_profil": false,
+            "statut_en_ligne": true,
+            "masquer_position": false
+          },
+          "badges": [],
+          "created_at": "2025-09-11T19:45:21.660699+00:00",
+          "updated_at": "2025-10-03T13:32:49.751333+00:00",
+          "victoires": 1,
+          "defaites": 5,
+          "matchs_joues": 6
+        },
+        {
+          "id": "036cf512-b955-43f8-acc9-c727a4f164af",
+          "nom_complet": "Antonio Garcia",
+          "date_naissance": "1987-09-30",
+          "sexe": "M",
+          "club_id": 1,
+          "points_classement": 3592,
+          "division_id": 9,
+          "position_gps": null,
+          "preference_langue": "es",
+          "confidentialite": {
+            "masquer_profil": false,
+            "statut_en_ligne": true,
+            "masquer_position": false
+          },
+          "badges": [],
+          "created_at": "2025-09-11T19:45:21.660699+00:00",
+          "updated_at": "2025-10-03T13:32:49.751333+00:00",
+          "victoires": 25,
+          "defaites": 29,
+          "matchs_joues": 54
+        },
+        {
+          "id": "aaa0a0af-e476-4ee0-9b6b-f8da5a0d209c",
+          "nom_complet": "Marco Rossi",
+          "date_naissance": "1989-04-18",
+          "sexe": "M",
+          "club_id": 5,
+          "points_classement": 2932,
+          "division_id": 8,
+          "position_gps": null,
+          "preference_langue": "it",
+          "confidentialite": {
+            "masquer_profil": false,
+            "statut_en_ligne": true,
+            "masquer_position": false
+          },
+          "badges": [],
+          "created_at": "2025-09-11T19:45:21.660699+00:00",
+          "updated_at": "2025-10-03T13:32:49.751333+00:00",
+          "victoires": 10,
+          "defaites": 2,
+          "matchs_joues": 12
+        },
+        {
+          "id": "152f25c3-94d3-409c-ade8-9439b23751e0",
+          "nom_complet": "Maria Santos 18",
+          "date_naissance": "1993-06-30",
+          "sexe": "F",
+          "club_id": 3,
+          "points_classement": 3586,
+          "division_id": 9,
+          "position_gps": null,
+          "preference_langue": "fr",
+          "confidentialite": {
+            "masquer_profil": false,
+            "statut_en_ligne": true,
+            "masquer_position": false
+          },
+          "badges": [],
+          "created_at": "2025-10-02T20:11:28.947605+00:00",
+          "updated_at": "2025-10-03T13:32:59.89697+00:00",
+          "victoires": 0,
+          "defaites": 1,
+          "matchs_joues": 1
+        },
+        {
+          "id": "93b1b661-b4c5-475e-8b36-32abb220d104",
+          "nom_complet": "Lucia Perez 11",
+          "date_naissance": "1995-10-21",
+          "sexe": "F",
+          "club_id": 3,
+          "points_classement": 2820,
+          "division_id": 8,
+          "position_gps": null,
+          "preference_langue": "fr",
+          "confidentialite": {
+            "masquer_profil": false,
+            "statut_en_ligne": true,
+            "masquer_position": false
+          },
+          "badges": [],
+          "created_at": "2025-10-02T20:11:28.947605+00:00",
+          "updated_at": "2025-10-03T13:32:59.89697+00:00",
+          "victoires": 1,
+          "defaites": 1,
+          "matchs_joues": 2
+        },
+        {
+          "id": "d3edfe7d-716b-4f38-b06b-8072e73fc69e",
+          "nom_complet": "Jean Dubois 2",
+          "date_naissance": "1993-01-10",
+          "sexe": "M",
+          "club_id": 3,
+          "points_classement": 2704,
+          "division_id": 8,
+          "position_gps": null,
+          "preference_langue": "fr",
+          "confidentialite": {
+            "masquer_profil": false,
+            "statut_en_ligne": true,
+            "masquer_position": false
+          },
+          "badges": [],
+          "created_at": "2025-10-02T20:11:28.947605+00:00",
+          "updated_at": "2025-10-03T13:32:59.89697+00:00",
+          "victoires": 2,
+          "defaites": 1,
+          "matchs_joues": 3
+        },
+        {
+          "id": "5a45d11e-b119-4c15-9b03-5893e60c15dc",
+          "nom_complet": "Lucas Lopez 6",
+          "date_naissance": "2000-11-17",
+          "sexe": "M",
+          "club_id": 3,
+          "points_classement": 3016,
+          "division_id": 9,
+          "position_gps": null,
+          "preference_langue": "fr",
+          "confidentialite": {
+            "masquer_profil": false,
+            "statut_en_ligne": true,
+            "masquer_position": false
+          },
+          "badges": [],
+          "created_at": "2025-10-02T20:11:28.947605+00:00",
+          "updated_at": "2025-10-03T13:32:59.89697+00:00",
+          "victoires": 6,
+          "defaites": 7,
+          "matchs_joues": 13
+        },
+        {
+          "id": "05805589-d9fe-4372-b140-d11adf654f58",
+          "nom_complet": "Antonio Garcia 19",
+          "date_naissance": "1985-10-05",
+          "sexe": "M",
+          "club_id": 3,
+          "points_classement": 785,
+          "division_id": 4,
+          "position_gps": null,
+          "preference_langue": "fr",
+          "confidentialite": {
+            "masquer_profil": false,
+            "statut_en_ligne": true,
+            "masquer_position": false
+          },
+          "badges": [],
+          "created_at": "2025-10-02T20:11:28.947605+00:00",
+          "updated_at": "2025-10-03T13:32:59.89697+00:00",
+          "victoires": 1,
+          "defaites": 2,
+          "matchs_joues": 3
+        }
+      ]
+    },
+    "divisions": {
+      "count": 15,
+      "columns": [
+        "id",
+        "nom",
+        "description",
+        "niveau",
+        "points_minimum",
+        "points_maximum",
+        "created_at",
+        "updated_at"
+      ],
+      "sample": {
+        "id": 1,
+        "nom": {
+          "en": "Padelino Starter",
+          "es": "Padelino Principiante",
+          "fr": "Padelino Starter",
+          "it": "Padelino Principiante"
+        },
+        "description": {
+          "en": "Complete beginners",
+          "es": "Principiantes completos",
+          "fr": "Débutants complets",
+          "it": "Principianti completi"
+        },
+        "niveau": 1,
+        "points_minimum": 0,
+        "points_maximum": 99,
+        "created_at": "2025-09-11T19:45:13.943045+00:00",
+        "updated_at": "2025-09-11T19:45:13.943045+00:00"
+      },
+      "allData": [
+        {
+          "id": 1,
+          "nom": {
+            "en": "Padelino Starter",
+            "es": "Padelino Principiante",
+            "fr": "Padelino Starter",
+            "it": "Padelino Principiante"
+          },
+          "description": {
+            "en": "Complete beginners",
+            "es": "Principiantes completos",
+            "fr": "Débutants complets",
+            "it": "Principianti completi"
+          },
+          "niveau": 1,
+          "points_minimum": 0,
+          "points_maximum": 99,
+          "created_at": "2025-09-11T19:45:13.943045+00:00",
+          "updated_at": "2025-09-11T19:45:13.943045+00:00"
+        },
+        {
+          "id": 2,
+          "nom": {
+            "en": "Rookie Padel",
+            "es": "Rookie Padel",
+            "fr": "Rookie Padel",
+            "it": "Rookie Padel"
+          },
+          "description": {
+            "en": "Just started",
+            "es": "Recién comenzado",
+            "fr": "Juste commencé",
+            "it": "Appena iniziato"
+          },
+          "niveau": 2,
+          "points_minimum": 100,
+          "points_maximum": 249,
+          "created_at": "2025-09-11T19:45:13.943045+00:00",
+          "updated_at": "2025-09-11T19:45:13.943045+00:00"
+        },
+        {
+          "id": 3,
+          "nom": {
+            "en": "Court Beginner",
+            "es": "Principiante de Pista",
+            "fr": "Court Beginner",
+            "it": "Principiante Campo"
+          },
+          "description": {
+            "en": "First serious matches",
+            "es": "Primeros partidos serios",
+            "fr": "Premiers matchs sérieux",
+            "it": "Prime partite serie"
+          },
+          "niveau": 3,
+          "points_minimum": 250,
+          "points_maximum": 499,
+          "created_at": "2025-09-11T19:45:13.943045+00:00",
+          "updated_at": "2025-09-11T19:45:13.943045+00:00"
+        },
+        {
+          "id": 4,
+          "nom": {
+            "en": "Rising Star",
+            "es": "Estrella Emergente",
+            "fr": "Rising Star",
+            "it": "Stella Nascente"
+          },
+          "description": {
+            "en": "Visible progress",
+            "es": "Progreso visible",
+            "fr": "Progression visible",
+            "it": "Progresso visibile"
+          },
+          "niveau": 4,
+          "points_minimum": 500,
+          "points_maximum": 799,
+          "created_at": "2025-09-11T19:45:13.943045+00:00",
+          "updated_at": "2025-09-11T19:45:13.943045+00:00"
+        },
+        {
+          "id": 5,
+          "nom": {
+            "en": "Fast Breaker",
+            "es": "Rompedor Rápido",
+            "fr": "Fast Breaker",
+            "it": "Veloce Attaccante"
+          },
+          "description": {
+            "en": "Good amateur level",
+            "es": "Buen nivel amateur",
+            "fr": "Bon niveau amateur",
+            "it": "Buon livello amatoriale"
+          },
+          "niveau": 5,
+          "points_minimum": 800,
+          "points_maximum": 1199,
+          "created_at": "2025-09-11T19:45:13.943045+00:00",
+          "updated_at": "2025-09-11T19:45:13.943045+00:00"
+        },
+        {
+          "id": 6,
+          "nom": {
+            "en": "Court Warrior",
+            "es": "Guerrero de Pista",
+            "fr": "Court Warrior",
+            "it": "Guerriero Campo"
+          },
+          "description": {
+            "en": "Confirmed local player",
+            "es": "Jugador confirmado local",
+            "fr": "Joueur confirmé local",
+            "it": "Giocatore confermato locale"
+          },
+          "niveau": 6,
+          "points_minimum": 1200,
+          "points_maximum": 1699,
+          "created_at": "2025-09-11T19:45:13.943045+00:00",
+          "updated_at": "2025-09-11T19:45:13.943045+00:00"
+        },
+        {
+          "id": 7,
+          "nom": {
+            "en": "Baseline Master",
+            "es": "Maestro de Fondo",
+            "fr": "Baseline Master",
+            "it": "Maestro Fondo Campo"
+          },
+          "description": {
+            "en": "Regional player",
+            "es": "Jugador regional",
+            "fr": "Joueur régional",
+            "it": "Giocatore regionale"
+          },
+          "niveau": 7,
+          "points_minimum": 1700,
+          "points_maximum": 2299,
+          "created_at": "2025-09-11T19:45:13.943045+00:00",
+          "updated_at": "2025-09-11T19:45:13.943045+00:00"
+        },
+        {
+          "id": 8,
+          "nom": {
+            "en": "Net Strategist",
+            "es": "Estratega de Red",
+            "fr": "Net Strategist",
+            "it": "Stratega Rete"
+          },
+          "description": {
+            "en": "Excellent movements",
+            "es": "Excelentes movimientos",
+            "fr": "Excellents déplacements",
+            "it": "Movimenti eccellenti"
+          },
+          "niveau": 8,
+          "points_minimum": 2300,
+          "points_maximum": 2999,
+          "created_at": "2025-09-11T19:45:13.943045+00:00",
+          "updated_at": "2025-09-11T19:45:13.943045+00:00"
+        },
+        {
+          "id": 9,
+          "nom": {
+            "en": "Smash Specialist",
+            "es": "Especialista en Smash",
+            "fr": "Smash Specialist",
+            "it": "Specialista Smash"
+          },
+          "description": {
+            "en": "Formidable attacker",
+            "es": "Atacante temible",
+            "fr": "Attaquant redoutable",
+            "it": "Attaccante temibile"
+          },
+          "niveau": 9,
+          "points_minimum": 3000,
+          "points_maximum": 3799,
+          "created_at": "2025-09-11T19:45:13.943045+00:00",
+          "updated_at": "2025-09-11T19:45:13.943045+00:00"
+        },
+        {
+          "id": 10,
+          "nom": {
+            "en": "Elite Padel",
+            "es": "Elite Padel",
+            "fr": "Elite Padel",
+            "it": "Elite Padel"
+          },
+          "description": {
+            "en": "Advanced player",
+            "es": "Jugador avanzado",
+            "fr": "Joueur avancé",
+            "it": "Giocatore avanzato"
+          },
+          "niveau": 10,
+          "points_minimum": 3800,
+          "points_maximum": 4699,
+          "created_at": "2025-09-11T19:45:13.943045+00:00",
+          "updated_at": "2025-09-11T19:45:13.943045+00:00"
+        }
+      ]
+    },
+    "clubs": {
+      "count": 8,
+      "columns": [
+        "id",
+        "nom",
+        "pays",
+        "ville",
+        "latitude",
+        "longitude",
+        "statut",
+        "date_creation",
+        "created_at",
+        "updated_at"
+      ],
+      "sample": {
+        "id": 1,
+        "nom": "Club Padel Barcelona",
+        "pays": "Espagne",
+        "ville": "Barcelona",
+        "latitude": 41.3851,
+        "longitude": 2.1734,
+        "statut": "valide",
+        "date_creation": "2025-09-11T19:45:17.815238+00:00",
+        "created_at": "2025-09-11T19:45:17.815238+00:00",
+        "updated_at": "2025-09-11T19:45:17.815238+00:00"
+      },
+      "allData": [
+        {
+          "id": 1,
+          "nom": "Club Padel Barcelona",
+          "pays": "Espagne",
+          "ville": "Barcelona",
+          "latitude": 41.3851,
+          "longitude": 2.1734,
+          "statut": "valide",
+          "date_creation": "2025-09-11T19:45:17.815238+00:00",
+          "created_at": "2025-09-11T19:45:17.815238+00:00",
+          "updated_at": "2025-09-11T19:45:17.815238+00:00"
+        },
+        {
+          "id": 2,
+          "nom": "Madrid Padel Center",
+          "pays": "Espagne",
+          "ville": "Madrid",
+          "latitude": 40.4168,
+          "longitude": -3.7038,
+          "statut": "valide",
+          "date_creation": "2025-09-11T19:45:17.815238+00:00",
+          "created_at": "2025-09-11T19:45:17.815238+00:00",
+          "updated_at": "2025-09-11T19:45:17.815238+00:00"
+        },
+        {
+          "id": 3,
+          "nom": "Paris Padel Club",
+          "pays": "France",
+          "ville": "Paris",
+          "latitude": 48.8566,
+          "longitude": 2.3522,
+          "statut": "valide",
+          "date_creation": "2025-09-11T19:45:17.815238+00:00",
+          "created_at": "2025-09-11T19:45:17.815238+00:00",
+          "updated_at": "2025-09-11T19:45:17.815238+00:00"
+        },
+        {
+          "id": 4,
+          "nom": "Club Padel Valencia",
+          "pays": "Espagne",
+          "ville": "Valencia",
+          "latitude": 39.4699,
+          "longitude": -0.3763,
+          "statut": "valide",
+          "date_creation": "2025-09-11T19:45:17.815238+00:00",
+          "created_at": "2025-09-11T19:45:17.815238+00:00",
+          "updated_at": "2025-09-11T19:45:17.815238+00:00"
+        },
+        {
+          "id": 5,
+          "nom": "Padel Club Milano",
+          "pays": "Italie",
+          "ville": "Milano",
+          "latitude": 45.4642,
+          "longitude": 9.19,
+          "statut": "valide",
+          "date_creation": "2025-09-11T19:45:17.815238+00:00",
+          "created_at": "2025-09-11T19:45:17.815238+00:00",
+          "updated_at": "2025-09-11T19:45:17.815238+00:00"
+        },
+        {
+          "id": 6,
+          "nom": "London Padel Academy",
+          "pays": "Royaume-Uni",
+          "ville": "London",
+          "latitude": 51.5074,
+          "longitude": -0.1278,
+          "statut": "valide",
+          "date_creation": "2025-09-11T19:45:17.815238+00:00",
+          "created_at": "2025-09-11T19:45:17.815238+00:00",
+          "updated_at": "2025-09-11T19:45:17.815238+00:00"
+        },
+        {
+          "id": 7,
+          "nom": "Padel Club Lyon",
+          "pays": "France",
+          "ville": "Lyon",
+          "latitude": 45.764,
+          "longitude": 4.8357,
+          "statut": "valide",
+          "date_creation": "2025-09-11T19:45:17.815238+00:00",
+          "created_at": "2025-09-11T19:45:17.815238+00:00",
+          "updated_at": "2025-09-11T19:45:17.815238+00:00"
+        },
+        {
+          "id": 8,
+          "nom": "Berlin Padel Center",
+          "pays": "Allemagne",
+          "ville": "Berlin",
+          "latitude": 52.52,
+          "longitude": 13.405,
+          "statut": "valide",
+          "date_creation": "2025-09-11T19:45:17.815238+00:00",
+          "created_at": "2025-09-11T19:45:17.815238+00:00",
+          "updated_at": "2025-09-11T19:45:17.815238+00:00"
+        }
+      ]
+    },
+    "ligues": {
+      "count": 3,
+      "columns": [
+        "id",
+        "nom",
+        "description",
+        "format",
+        "nombre_joueurs",
+        "joueurs_ids",
+        "statut",
+        "createur_id",
+        "created_at",
+        "updated_at"
+      ],
+      "sample": {
+        "id": 3,
+        "nom": "Ligue Printemps 2025",
+        "description": "Ligue amicale entre amis",
+        "format": "americano",
+        "nombre_joueurs": 8,
+        "joueurs_ids": [
+          "f274b85c-9d21-4ca0-bef0-ae68a6712707",
+          "266483e2-a558-4859-a14c-4cff167048fb",
+          "141ed4c4-4282-46d3-8bc7-c3f6a97c85f2",
+          "a2a0da64-c716-441b-9f08-3fe81c7a7325",
+          "e574d0b2-58cd-47a3-a4ce-5a2daf7ce3de",
+          "036cf512-b955-43f8-acc9-c727a4f164af",
+          "38af0064-582e-4f52-af8e-2b8374410561",
+          "aaa0a0af-e476-4ee0-9b6b-f8da5a0d209c"
+        ],
+        "statut": "active",
+        "createur_id": "f274b85c-9d21-4ca0-bef0-ae68a6712707",
+        "created_at": "2025-10-02T21:06:12.83219+00:00",
+        "updated_at": "2025-10-02T21:06:12.83219+00:00"
+      },
+      "allData": [
+        {
+          "id": 3,
+          "nom": "Ligue Printemps 2025",
+          "description": "Ligue amicale entre amis",
+          "format": "americano",
+          "nombre_joueurs": 8,
+          "joueurs_ids": [
+            "f274b85c-9d21-4ca0-bef0-ae68a6712707",
+            "266483e2-a558-4859-a14c-4cff167048fb",
+            "141ed4c4-4282-46d3-8bc7-c3f6a97c85f2",
+            "a2a0da64-c716-441b-9f08-3fe81c7a7325",
+            "e574d0b2-58cd-47a3-a4ce-5a2daf7ce3de",
+            "036cf512-b955-43f8-acc9-c727a4f164af",
+            "38af0064-582e-4f52-af8e-2b8374410561",
+            "aaa0a0af-e476-4ee0-9b6b-f8da5a0d209c"
+          ],
+          "statut": "active",
+          "createur_id": "f274b85c-9d21-4ca0-bef0-ae68a6712707",
+          "created_at": "2025-10-02T21:06:12.83219+00:00",
+          "updated_at": "2025-10-02T21:06:12.83219+00:00"
+        },
+        {
+          "id": 1,
+          "nom": "Ligue Été 2025",
+          "description": "Tournoi estival pour tous niveaux",
+          "format": "americano",
+          "nombre_joueurs": 8,
+          "joueurs_ids": [
+            "aaa0a0af-e476-4ee0-9b6b-f8da5a0d209c",
+            "036cf512-b955-43f8-acc9-c727a4f164af",
+            "38af0064-582e-4f52-af8e-2b8374410561",
+            "e574d0b2-58cd-47a3-a4ce-5a2daf7ce3de",
+            "266483e2-a558-4859-a14c-4cff167048fb",
+            "3b7d3d01-7b45-4ec9-a59c-360c4b4ce26f",
+            "a2a0da64-c716-441b-9f08-3fe81c7a7325",
+            "141ed4c4-4282-46d3-8bc7-c3f6a97c85f2"
+          ],
+          "statut": "active",
+          "createur_id": "266483e2-a558-4859-a14c-4cff167048fb",
+          "created_at": "2025-09-11T19:45:31.081706+00:00",
+          "updated_at": "2025-10-03T13:30:54.721435+00:00"
+        },
+        {
+          "id": 2,
+          "nom": "Tournoi Corporate",
+          "description": "Championnat inter-entreprises",
+          "format": "paires_fixes",
+          "nombre_joueurs": 12,
+          "joueurs_ids": [
+            "88ffab38-b49a-4386-9363-c02e028f9a32",
+            "f274b85c-9d21-4ca0-bef0-ae68a6712707",
+            "5a45d11e-b119-4c15-9b03-5893e60c15dc",
+            "56cbebdb-fcdd-40e5-9e42-9d22a5020f02",
+            "05805589-d9fe-4372-b140-d11adf654f58",
+            "828fdbc0-424e-48cc-b6c8-22fc37edd629",
+            "cf2b683a-4626-4b3f-b92e-c028dfecf011",
+            "0d38736f-4e05-42cc-8412-a1e0185270c3",
+            "7d0c7892-8566-4d99-bdbd-88664bd33ae3",
+            "93b1b661-b4c5-475e-8b36-32abb220d104",
+            "d3edfe7d-716b-4f38-b06b-8072e73fc69e",
+            "152f25c3-94d3-409c-ade8-9439b23751e0"
+          ],
+          "statut": "active",
+          "createur_id": "141ed4c4-4282-46d3-8bc7-c3f6a97c85f2",
+          "created_at": "2025-09-11T19:45:31.081706+00:00",
+          "updated_at": "2025-10-03T13:30:54.721435+00:00"
+        }
+      ]
+    },
+    "ligues_joueurs": {
+      "count": 0,
+      "columns": [],
+      "sample": null,
+      "allData": []
+    },
+    "matchs": {
+      "count": 0,
+      "columns": [],
+      "sample": null,
+      "allData": []
+    },
+    "defis": {
+      "count": 0,
+      "columns": [],
+      "sample": null,
+      "allData": []
+    },
+    "notifications": {
+      "count": 0,
+      "columns": [],
+      "sample": null,
+      "allData": []
+    },
+    "sanctions": {
+      "count": 0,
+      "columns": [],
+      "sample": null,
+      "allData": []
+    }
+  },
+  "summary": {
+    "joueurs": "✅ 30 enregistrement(s)",
+    "divisions": "✅ 15 enregistrement(s)",
+    "clubs": "✅ 8 enregistrement(s)",
+    "ligues": "✅ 3 enregistrement(s)",
+    "ligues_joueurs": "✅ 0 enregistrement(s)",
+    "matchs": "✅ 0 enregistrement(s)",
+    "defis": "✅ 0 enregistrement(s)",
+    "notifications": "✅ 0 enregistrement(s)",
+    "sanctions": "✅ 0 enregistrement(s)"
+  }
+}

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '@/hooks/useAuth';
-import { isSupabaseConfigured, getPlayerStats, getRecentActivity } from '@/lib/supabase-rn';
+import { isSupabaseConfigured, getPlayerStats, getRecentActivity, getPlayerRankingInAllDivisions, getPlayerRankingGlobal, getPlayerRankingInClub } from '@/lib/supabase-rn';
 import { useFocusEffect } from '@react-navigation/native';
 
 // Mock division data for when Supabase is not configured
@@ -37,6 +37,9 @@ export default function HomeScreen() {
   const [recentActivity, setRecentActivity] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [ranking, setRanking] = React.useState<{ position: number; total: number } | null>(null);
+  const [divisionRankings, setDivisionRankings] = React.useState<any[]>([]);
+  const [globalRanking, setGlobalRanking] = React.useState<{ position: number; total: number } | null>(null);
+  const [clubRanking, setClubRanking] = React.useState<{ position: number; total: number; club_id: number } | null>(null);
 
   React.useEffect(() => {
     console.log('🏠 Home useEffect triggered:', {

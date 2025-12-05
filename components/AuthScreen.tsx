@@ -46,6 +46,12 @@ export default function AuthScreen() {
   React.useEffect(() => {
     // Always use mock clubs data for now
     console.log('Using mock clubs data');
+    
+    // Debug: Check Supabase configuration
+    console.log('🔍 AuthScreen - Supabase Debug:');
+    console.log('URL:', process.env.EXPO_PUBLIC_SUPABASE_URL);
+    console.log('Key:', process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET');
+    console.log('isSupabaseConfigured:', isSupabaseConfigured());
   }, []);
 
   const loadClubs = async () => {

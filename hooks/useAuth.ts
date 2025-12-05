@@ -199,6 +199,32 @@ export function useAuth() {
     console.log('🔐 Tentative de connexion avec:', { email, passwordLength: password.length });
 
     try {
+      console.log('🔐 Attempting sign-in with Supabase...');
+      console.log('🔧 Supabase configured:', isSupabaseConfigured());
+      console.log('🌐 Supabase URL:', process.env.EXPO_PUBLIC_SUPABASE_URL?.substring(0, 30) + '...');
+      
+      // Test basic connectivity first
+      try {
+        const testResponse = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/`, {
+          method: 'GET',
+          headers: {
+            'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
+            'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ''}`
+          }
+        });
+        console.log('🌐 Connectivity test:', testResponse.status, testResponse.statusText);
+      } catch (fetchError: any) {
+        console.error('❌ Connectivity test failed:', fetchError.message);
+        return {
+          data: null,
+          error: {
+            message: `Erreur de connexion réseau: ${fetchError.message}. Vérifiez que Supabase est actif et accessible.`,
+            name: 'NetworkError',
+            status: 0
+          } as any
+        };
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -210,20 +236,36 @@ export function useAuth() {
           status: error.status,
           details: error
         });
+        
+        // Provide more specific error messages
+        if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+          return {
+            data: null,
+            error: {
+              ...error,
+              message: 'Impossible de se connecter au serveur. Vérifiez votre connexion internet et que Supabase est actif.'
+            }
+          };
+        }
       } else {
         console.log('✅ Connexion réussie:', { userId: data.user?.id, email: data.user?.email });
       }
 
       return { data, error };
-    } catch (networkError) {
+    } catch (networkError: any) {
       // Handle network errors gracefully
-      console.error('Network error during sign-in:', networkError);
+      console.error('❌ Network error during sign-in:', networkError);
+      const errorMessage = networkError?.message || 'Erreur de connexion réseau';
+      
       return { 
         data: null, 
         error: { 
-          message: 'Network connection failed. Please check your internet connection and try again.',
-          name: 'NetworkError'
-        } 
+          message: errorMessage.includes('Failed to fetch') 
+            ? 'Erreur de connexion: Impossible de joindre le serveur Supabase. Vérifiez que le projet est actif.'
+            : `Erreur de connexion: ${errorMessage}`,
+          name: 'NetworkError',
+          status: 0
+        } as any
       };
     }
   };
