@@ -4,8 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase-rn';
+import { supabase, createDefiInLigue, getLiguePlayers } from '@/lib/supabase-rn';
 import { useAuth } from '@/hooks/useAuth';
+import TeamScoreModal from '@/components/TeamScoreModal';
 
 interface LeaguePlayer {
   id: number;
@@ -48,6 +49,9 @@ export default function LeagueDetailsScreen() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'points' | 'winrate' | 'matches'>('points');
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const [selectedOpponent, setSelectedOpponent] = useState<LeaguePlayer | null>(null);
+  const [availablePlayers, setAvailablePlayers] = useState<LeaguePlayer[]>([]);
 
   useEffect(() => {
     if (leagueId) {
@@ -338,6 +342,20 @@ export default function LeagueDetailsScreen() {
                   </ScrollView>
                 </View>
 
+                {/* Bouton Défier (uniquement pour ligues manuelles) */}
+                {league && league.type_ligue === 'manuelle' && joueur && (
+                  <TouchableOpacity
+                    style={styles.challengeButton}
+                    onPress={() => {
+                      setAvailablePlayers(players.filter(p => p.joueur_id !== joueur.id));
+                      setShowChallengeModal(true);
+                    }}
+                  >
+                    <Ionicons name="trophy" size={20} color="#ffffff" />
+                    <Text style={styles.challengeButtonText}>Défier un joueur</Text>
+                  </TouchableOpacity>
+                )}
+
                 {filteredPlayers.length === 0 ? (
                   <View style={styles.emptyState}>
                     <Ionicons name={searchQuery ? "search-outline" : "people-outline"} size={48} color="#9ca3af" />
@@ -473,9 +491,57 @@ export default function LeagueDetailsScreen() {
                 )}
               </View>
             )}
-          </>
-        )}
+        </>
+      )}
       </ScrollView>
+
+      {/* Modal pour défier un joueur de la ligue */}
+      {showChallengeModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Défier un joueur</Text>
+              <TouchableOpacity onPress={() => setShowChallengeModal(false)}>
+                <Ionicons name="close" size={24} color="#111827" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalPlayersList}>
+              {availablePlayers.length === 0 ? (
+                <Text style={styles.modalEmptyText}>Aucun joueur disponible</Text>
+              ) : (
+                availablePlayers.map((player) => (
+                  <TouchableOpacity
+                    key={player.joueur_id}
+                    style={styles.modalPlayerItem}
+                    onPress={async () => {
+                      if (!joueur || !leagueId) return;
+                      try {
+                        await createDefiInLigue({
+                          ligue_id: parseInt(leagueId as string),
+                          expediteur_id: joueur.id,
+                          destinataire_id: player.joueur_id,
+                          message: `Défi de ligue: ${leagueName}`
+                        });
+                        alert('Défi envoyé avec succès !');
+                        setShowChallengeModal(false);
+                        setSelectedOpponent(null);
+                      } catch (error: any) {
+                        console.error('Erreur création défi:', error);
+                        alert(`Erreur: ${error.message || 'Impossible de créer le défi'}`);
+                      }
+                    }}
+                  >
+                    <Text style={styles.modalPlayerName}>{player.joueur.nom_complet}</Text>
+                    <Text style={styles.modalPlayerStats}>
+                      Position: {player.position} • Points: {player.points}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -816,5 +882,74 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     marginTop: 12,
     fontWeight: '500',
+  },
+  challengeButton: {
+    backgroundColor: '#f97316',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    marginHorizontal: 24,
+  },
+  challengeButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 8,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    width: '85%',
+    maxHeight: '70%',
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  modalPlayersList: {
+    maxHeight: 400,
+  },
+  modalPlayerItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalPlayerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  modalPlayerStats: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  modalEmptyText: {
+    fontSize: 16,
+    color: '#9ca3af',
+    textAlign: 'center',
+    padding: 20,
   },
 });

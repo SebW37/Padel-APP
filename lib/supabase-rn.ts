@@ -136,6 +136,7 @@ export interface Ligue {
   nombre_joueurs: number;
   joueurs_ids: string[];
   statut: 'active' | 'terminee' | 'en_attente';
+  type_ligue?: 'manuelle' | 'automatique';
   createur_id: string;
   created_at: string;
   updated_at: string;
@@ -148,8 +149,9 @@ export interface Defi {
   expediteur?: any;
   destinataire?: any;
   message?: string;
-  statut: 'en_attente' | 'accepte' | 'refuse' | 'expire';
+  statut: 'en_attente' | 'accepte' | 'refuse' | 'expire' | 'termine';
   date_expiration: string;
+  ligue_id?: number;
   equipe1_joueur1_id?: string;
   equipe1_joueur2_id?: string;
   equipe2_joueur1_id?: string;
@@ -723,14 +725,33 @@ export const createDefiInLigue = async (defi: {
       destinataire_id: defi.destinataire_id,
       message: defi.message || 'Défi de ligue',
       statut: 'en_attente',
+      ligue_id: defi.ligue_id,
       date_expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      // On pourrait ajouter un champ ligue_id dans defis si nécessaire
     })
     .select()
     .single();
 
   if (error) throw error;
   return data as Defi;
+};
+
+export const getLiguePlayers = async (ligue_id: number) => {
+  const { data: ligueJoueurs, error } = await supabase
+    .from('ligues_joueurs')
+    .select(`
+      joueur_id,
+      position,
+      points,
+      victoires,
+      defaites,
+      matchs_joues,
+      joueur:joueurs(id, nom_complet, points_classement, division_id)
+    `)
+    .eq('ligue_id', ligue_id)
+    .order('position', { ascending: true });
+
+  if (error) throw error;
+  return ligueJoueurs || [];
 };
 
 export const updateDefiTeamsAndScore = async (

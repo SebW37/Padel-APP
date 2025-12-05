@@ -23,6 +23,7 @@
     "estimate:first": "node scripts/estimate-victories-to-first.js",
     "simulate:close": "node scripts/simulate-close-victories.js",
     "test:new-elo": "node scripts/test-new-elo-system.js",
+    "verify:impl": "node scripts/verify-implementation.js",
     "seed:complete": "node scripts/seed-complete-database.js",
     "seed:existing": "node scripts/seed-with-existing-users.js"
   },

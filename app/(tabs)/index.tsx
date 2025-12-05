@@ -282,11 +282,35 @@ export default function HomeScreen() {
             <Text style={styles.divisionLevel}>
               Division {division?.niveau || 6} • {joueur?.points_classement?.toLocaleString() || '1,247'} points
             </Text>
-            {ranking && (
-              <Text style={styles.rankingPosition}>
-                Position: {ranking.position} / {ranking.total}
-              </Text>
-            )}
+            
+            {/* Classements globaux */}
+            <View style={styles.rankingsGrid}>
+              {globalRanking && (
+                <View style={styles.rankingItem}>
+                  <Ionicons name="globe" size={16} color="#3b82f6" />
+                  <Text style={styles.rankingItemText}>
+                    Mondial: {globalRanking.position}/{globalRanking.total}
+                  </Text>
+                </View>
+              )}
+              {clubRanking && (
+                <View style={styles.rankingItem}>
+                  <Ionicons name="business" size={16} color="#10b981" />
+                  <Text style={styles.rankingItemText}>
+                    Club: {clubRanking.position}/{clubRanking.total}
+                  </Text>
+                </View>
+              )}
+              {ranking && (
+                <View style={styles.rankingItem}>
+                  <Ionicons name="trophy" size={16} color="#f97316" />
+                  <Text style={styles.rankingItemText}>
+                    Division: {ranking.position}/{ranking.total}
+                  </Text>
+                </View>
+              )}
+            </View>
+
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, { width: `${progress}%` }]} />
             </View>
@@ -295,6 +319,56 @@ export default function HomeScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Classements par Division */}
+        {divisionRankings.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Position dans toutes les Divisions</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.divisionsScroll}>
+              {divisionRankings
+                .filter(r => r.position !== null || r.canReach)
+                .map((rank, index) => (
+                  <View 
+                    key={rank.division.id} 
+                    style={[
+                      styles.divisionRankCard,
+                      rank.isCurrentDivision && styles.divisionRankCardCurrent
+                    ]}
+                  >
+                    <Text style={styles.divisionRankName}>
+                      {rank.division.nom.fr || rank.division.nom['fr']}
+                    </Text>
+                    <Text style={styles.divisionRankLevel}>
+                      Niveau {rank.division.niveau}
+                    </Text>
+                    {rank.position ? (
+                      <View style={styles.divisionRankPosition}>
+                        <Ionicons 
+                          name={rank.isCurrentDivision ? "star" : "trophy-outline"} 
+                          size={20} 
+                          color={rank.isCurrentDivision ? "#f97316" : "#6b7280"} 
+                        />
+                        <Text style={[
+                          styles.divisionRankPositionText,
+                          rank.isCurrentDivision && styles.divisionRankPositionTextCurrent
+                        ]}>
+                          {rank.position}/{rank.total}
+                        </Text>
+                      </View>
+                    ) : rank.canReach ? (
+                      <Text style={styles.divisionRankReachable}>
+                        Accessible
+                      </Text>
+                    ) : (
+                      <Text style={styles.divisionRankUnreachable}>
+                        Non accessible
+                      </Text>
+                    )}
+                  </View>
+                ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Quick Stats */}
         {loading ? (
@@ -445,6 +519,88 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 12,
     color: '#6b7280',
+  },
+  rankingsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginVertical: 12,
+    gap: 8,
+  },
+  rankingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  rankingItemText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#374151',
+    marginLeft: 6,
+  },
+  divisionsScroll: {
+    marginTop: 12,
+  },
+  divisionRankCard: {
+    backgroundColor: '#ffffff',
+    padding: 16,
+    borderRadius: 12,
+    marginRight: 12,
+    width: 140,
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  divisionRankCardCurrent: {
+    borderColor: '#f97316',
+    backgroundColor: '#fff7ed',
+  },
+  divisionRankName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  divisionRankLevel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 8,
+  },
+  divisionRankPosition: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  divisionRankPositionText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#6b7280',
+    marginLeft: 4,
+  },
+  divisionRankPositionTextCurrent: {
+    color: '#f97316',
+  },
+  divisionRankReachable: {
+    fontSize: 12,
+    color: '#10b981',
+    textAlign: 'center',
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  divisionRankUnreachable: {
+    fontSize: 12,
+    color: '#9ca3af',
+    textAlign: 'center',
+    marginTop: 4,
   },
   statsContainer: {
     flexDirection: 'row',
