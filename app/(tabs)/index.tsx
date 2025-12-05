@@ -124,9 +124,30 @@ export default function HomeScreen() {
         console.log('📊 Loading ranking...');
         await loadRanking();
 
+        console.log('📊 Loading division rankings...');
+        const divisionRankingsData = await getPlayerRankingInAllDivisions(joueur.id).catch(err => {
+          console.error('Error loading division rankings:', err);
+          return [];
+        });
+
+        console.log('📊 Loading global ranking...');
+        const globalRankingData = await getPlayerRankingGlobal(joueur.id).catch(err => {
+          console.error('Error loading global ranking:', err);
+          return null;
+        });
+
+        console.log('📊 Loading club ranking...');
+        const clubRankingData = await getPlayerRankingInClub(joueur.id).catch(err => {
+          console.error('Error loading club ranking:', err);
+          return null;
+        });
+
         console.log('✅ Data loaded successfully');
         setStats(statsData);
         setRecentActivity(formatActivity(activityData));
+        setDivisionRankings(divisionRankingsData || []);
+        setGlobalRanking(globalRankingData);
+        setClubRanking(clubRankingData);
       }
     } catch (error) {
       console.error('❌ Erreur chargement données:', error);
