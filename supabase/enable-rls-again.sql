@@ -10,3 +10,4 @@ ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 SELECT 'RLS réactivé sur toutes les tables principales' as status;
 
+

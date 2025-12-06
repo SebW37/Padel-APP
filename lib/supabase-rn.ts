@@ -511,6 +511,81 @@ export const getLeagueStats = async (joueur_id: string) => {
   };
 };
 
+export const getPlayerPerformanceHistory = async (joueur_id: string) => {
+  // Récupérer tous les matchs validés du joueur, triés par date
+  const { data: matches, error } = await supabase
+    .from('matchs')
+    .select('id, date_match, equipe1_gagnante, joueur1_id, joueur2_id, joueur3_id, joueur4_id')
+    .or(`joueur1_id.eq.${joueur_id},joueur2_id.eq.${joueur_id},joueur3_id.eq.${joueur_id},joueur4_id.eq.${joueur_id}`)
+    .eq('statut', 'valide')
+    .order('date_match', { ascending: true });
+
+  if (error) throw error;
+  if (!matches || matches.length === 0) return { weekly: [], points: [] };
+
+  // Récupérer l'historique des points du joueur (via les matchs et les updates)
+  // Pour les points, on va simuler en calculant l'évolution basée sur les victoires/défaites
+  const pointsHistory: Array<{ date: string; points: number }> = [];
+  const weeklyData: Array<{ date: string; victories: number; matches: number }> = [];
+
+  // Grouper par semaine
+  const weeklyStats: { [key: string]: { victories: number; matches: number } } = {};
+
+  matches.forEach((match) => {
+    const matchDate = new Date(match.date_match);
+    // Créer une clé semaine (année-semaine)
+    const year = matchDate.getFullYear();
+    const weekNumber = Math.ceil((matchDate.getTime() - new Date(year, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
+    const weekKey = `${year}-S${weekNumber}`;
+    
+    if (!weeklyStats[weekKey]) {
+      weeklyStats[weekKey] = { victories: 0, matches: 0 };
+    }
+
+    const isEquipe1 = match.joueur1_id === joueur_id || match.joueur2_id === joueur_id;
+    const isWin = (isEquipe1 && match.equipe1_gagnante) || (!isEquipe1 && !match.equipe1_gagnante);
+    
+    weeklyStats[weekKey].matches++;
+    if (isWin) {
+      weeklyStats[weekKey].victories++;
+    }
+  });
+
+  // Convertir en tableau pour le scatter plot XY
+  Object.keys(weeklyStats).sort().forEach((weekKey) => {
+    weeklyData.push({
+      date: weekKey,
+      victories: weeklyStats[weekKey].victories,
+      matches: weeklyStats[weekKey].matches,
+    });
+  });
+
+  // Calculer l'évolution des points (approximation basée sur les victoires)
+  let estimatedPoints = 1200; // Points de départ par défaut
+  matches.forEach((match, index) => {
+    const matchDate = new Date(match.date_match);
+    const isEquipe1 = match.joueur1_id === joueur_id || match.joueur2_id === joueur_id;
+    const isWin = (isEquipe1 && match.equipe1_gagnante) || (!isEquipe1 && !match.equipe1_gagnante);
+    
+    // Approximation simple : +25 pour victoire, -15 pour défaite
+    estimatedPoints += isWin ? 25 : -15;
+    
+    // Ajouter un point de données tous les 5 matchs ou à la fin
+    if (index % 5 === 0 || index === matches.length - 1) {
+      const dateKey = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}-${String(matchDate.getDate()).padStart(2, '0')}`;
+      pointsHistory.push({
+        date: dateKey,
+        points: estimatedPoints,
+      });
+    }
+  });
+
+  return {
+    weekly: weeklyData, // Pour le scatter plot XY (victoires vs matchs par semaine)
+    points: pointsHistory, // Pour le graphique d'évolution des points
+  };
+};
+
 export const getDefis = async (joueur_id: string) => {
   const { data: defis, error } = await supabase
     .from('defis')

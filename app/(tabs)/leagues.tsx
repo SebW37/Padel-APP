@@ -1,11 +1,232 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '@/hooks/useAuth';
-import { getPlayerLigues, getLigues, getLeagueStats } from '@/lib/supabase-rn';
+import { getPlayerLigues, getLigues, getLeagueStats, getPlayerPerformanceHistory } from '@/lib/supabase-rn';
 import { useRouter } from 'expo-router';
+
+// Import conditionnel de react-native-chart-kit (ne fonctionne pas sur le web)
+let LineChart: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    const chartKit = require('react-native-chart-kit');
+    LineChart = chartKit.LineChart;
+  } catch (error) {
+    console.warn('react-native-chart-kit not available:', error);
+  }
+}
+
+// Composant scatter plot XY (victoires vs matchs par semaine)
+const ScatterPlotChart = ({ data, width, height }: { data: any[]; width: number; height: number }) => {
+  if (data.length === 0) return null;
+
+  const maxVictories = Math.max(...data.map(d => d.victories), 1);
+  const maxMatches = Math.max(...data.map(d => d.matches), 1);
+
+  const chartHeight = height - 80;
+  const chartWidth = width - 80;
+
+  return (
+    <View style={styles.simpleChartContainer}>
+      <View style={styles.simpleChart}>
+        <Text style={styles.chartSubtitle}>Victoires vs Matchs joués (par semaine)</Text>
+        <View style={styles.chartArea}>
+          {/* Lignes de grille */}
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+            <View
+              key={`h-${i}`}
+              style={[
+                styles.gridLine,
+                {
+                  top: ratio * chartHeight,
+                }
+              ]}
+            />
+          ))}
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+            <View
+              key={`v-${i}`}
+              style={[
+                styles.gridLineVertical,
+                {
+                  left: 40 + ratio * chartWidth,
+                }
+              ]}
+            />
+          ))}
+
+          {/* Points du scatter plot */}
+          {data.map((d, i) => {
+            const x = 40 + (d.matches / maxMatches) * chartWidth;
+            const y = chartHeight - (d.victories / maxVictories) * chartHeight;
+            return (
+              <View
+                key={i}
+                style={[
+                  styles.scatterPoint,
+                  {
+                    left: x - 6,
+                    top: y - 6,
+                  }
+                ]}
+              >
+                <View style={styles.scatterPointInner} />
+              </View>
+            );
+          })}
+
+          {/* Labels Y (victoires) */}
+          <View style={styles.yLabels}>
+            {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+              <Text key={i} style={[styles.yLabel, { top: ratio * chartHeight - 8 }]}>
+                {Math.round(maxVictories * (1 - ratio))}
+              </Text>
+            ))}
+          </View>
+
+          {/* Labels X (matchs) */}
+          <View style={styles.xLabels}>
+            {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+              <Text key={i} style={[styles.xLabel, { left: 40 + ratio * chartWidth - 15 }]}>
+                {Math.round(maxMatches * ratio)}
+              </Text>
+            ))}
+          </View>
+
+          {/* Labels des axes */}
+          <Text style={styles.yAxisLabel}>Victoires</Text>
+          <Text style={styles.xAxisLabel}>Matchs joués</Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// Composant graphique d'évolution des points
+const PointsEvolutionChart = ({ data, width, height }: { data: any[]; width: number; height: number }) => {
+  if (data.length === 0) return null;
+
+  const minPoints = Math.min(...data.map(d => d.points));
+  const maxPoints = Math.max(...data.map(d => d.points));
+  const range = maxPoints - minPoints || 1;
+
+  const chartHeight = height - 80;
+  const chartWidth = width - 80;
+  const pointSpacing = chartWidth / (data.length - 1 || 1);
+
+  return (
+    <View style={styles.simpleChartContainer}>
+      <View style={styles.simpleChart}>
+        <Text style={styles.chartSubtitle}>Évolution des points ELO</Text>
+        <View style={styles.chartArea}>
+          {/* Lignes de grille horizontales */}
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+            <View
+              key={i}
+              style={[
+                styles.gridLine,
+                {
+                  top: ratio * chartHeight,
+                }
+              ]}
+            />
+          ))}
+
+          {/* Points et lignes */}
+          {data.map((d, i) => {
+            const x = 40 + i * pointSpacing;
+            const y = chartHeight - ((d.points - minPoints) / range) * chartHeight;
+            
+            return (
+              <React.Fragment key={i}>
+                {/* Point */}
+                <View
+                  style={[
+                    styles.pointMarker,
+                    {
+                      left: x - 4,
+                      top: y - 4,
+                    }
+                  ]}
+                />
+                {/* Ligne vers le point suivant */}
+                {i < data.length - 1 && (
+                  <View
+                    style={[
+                      styles.lineConnector,
+                      {
+                        left: x + 4,
+                        top: y,
+                        width: pointSpacing - 8,
+                        height: 2,
+                        backgroundColor: '#f97316',
+                      }
+                    ]}
+                  />
+                )}
+              </React.Fragment>
+            );
+          })}
+          
+          {/* Lignes diagonales entre points (approximation) */}
+          {data.map((d, i) => {
+            if (i === 0) return null;
+            const x1 = 40 + (i - 1) * pointSpacing;
+            const y1 = chartHeight - ((data[i - 1].points - minPoints) / range) * chartHeight;
+            const x2 = 40 + i * pointSpacing;
+            const y2 = chartHeight - ((d.points - minPoints) / range) * chartHeight;
+            
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            
+            return (
+              <View
+                key={`line-${i}`}
+                style={[
+                  styles.lineSegment,
+                  {
+                    left: x1 + 4,
+                    top: y1,
+                    width: length - 8,
+                    height: 2,
+                    transform: [{ rotate: `${angle}deg` }],
+                  }
+                ]}
+              />
+            );
+          })}
+
+          {/* Labels Y (points) */}
+          <View style={styles.yLabels}>
+            {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+              <Text key={i} style={[styles.yLabel, { top: ratio * chartHeight - 8 }]}>
+                {Math.round(minPoints + range * (1 - ratio))}
+              </Text>
+            ))}
+          </View>
+
+          {/* Labels X (dates) */}
+          <View style={styles.xLabels}>
+            {data.map((d, i) => {
+              if (data.length <= 5 || i === 0 || i === Math.floor(data.length / 2) || i === data.length - 1) {
+                return (
+                  <Text key={i} style={[styles.xLabel, { left: 40 + i * pointSpacing - 20 }]}>
+                    {d.date.substring(5)}
+                  </Text>
+                );
+              }
+              return null;
+            })}
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+};
 
 export default function LeaguesScreen() {
   const { joueur } = useAuth();
@@ -20,7 +241,9 @@ export default function LeaguesScreen() {
     bestPosition: 0,
     totalPoints: 0
   });
+  const [performanceHistory, setPerformanceHistory] = useState<{ weekly: any[]; points: any[] }>({ weekly: [], points: [] });
   const [loading, setLoading] = useState(true);
+  const screenWidth = Dimensions.get('window').width;
 
   React.useEffect(() => {
     if (joueur?.id) {
@@ -99,6 +322,11 @@ export default function LeaguesScreen() {
         };
       });
 
+      const history = await getPlayerPerformanceHistory(joueur!.id).catch(err => {
+        console.error('Error loading performance history:', err);
+        return { weekly: [], points: [] };
+      });
+
       const formattedMyLeagues = playerLigues?.map((pl: any) => ({
         id: pl.ligue.id,
         name: pl.ligue.nom,
@@ -125,6 +353,7 @@ export default function LeaguesScreen() {
       setMyLeagues(formattedMyLeagues);
       setAvailableLeagues(formattedAvailableLeagues);
       setLeagueStats(stats);
+      setPerformanceHistory(history);
     } catch (error) {
       console.error('❌ Erreur chargement ligues:', error);
     } finally {
@@ -293,12 +522,109 @@ export default function LeaguesScreen() {
               </View>
             </View>
 
-            {/* Performance Chart Placeholder */}
+            {/* Performance Charts */}
             <View style={styles.chartContainer}>
               <Text style={styles.chartTitle}>Évolution des performances</Text>
-              <View style={styles.chartPlaceholder}>
-                <Text style={styles.chartPlaceholderText}>Graphique d'évolution</Text>
-              </View>
+              
+              {/* Scatter Plot XY : Victoires vs Matchs par semaine */}
+              {performanceHistory.weekly.length > 0 ? (
+                <View style={styles.chartWrapper}>
+                  {LineChart && Platform.OS !== 'web' ? (
+                    // Graphique natif scatter pour iOS/Android (si disponible)
+                    <View style={styles.chartPlaceholder}>
+                      <Text style={styles.chartPlaceholderText}>Graphique XY disponible sur web</Text>
+                    </View>
+                  ) : (
+                    <ScatterPlotChart 
+                      data={performanceHistory.weekly} 
+                      width={screenWidth - 88} 
+                      height={220} 
+                    />
+                  )}
+                </View>
+              ) : (
+                <View style={styles.chartPlaceholder}>
+                  <Ionicons name="trending-up-outline" size={48} color="#9ca3af" />
+                  <Text style={styles.chartPlaceholderText}>
+                    Aucune donnée hebdomadaire disponible
+                  </Text>
+                </View>
+              )}
+
+              {/* Graphique d'évolution des points */}
+              {performanceHistory.points.length > 0 ? (
+                <View style={[styles.chartWrapper, { marginTop: 24 }]}>
+                  {LineChart && Platform.OS !== 'web' ? (
+                    // Graphique natif pour iOS/Android
+                    <LineChart
+                      data={{
+                        labels: performanceHistory.points.map((h, i) => {
+                          if (performanceHistory.points.length <= 5) return h.date.substring(5);
+                          if (i === 0 || i === Math.floor(performanceHistory.points.length / 2) || i === performanceHistory.points.length - 1) {
+                            return h.date.substring(5);
+                          }
+                          return '';
+                        }),
+                        datasets: [
+                          {
+                            data: performanceHistory.points.map(h => h.points),
+                            color: (opacity = 1) => `rgba(249, 115, 22, ${opacity})`,
+                            strokeWidth: 2
+                          }
+                        ],
+                        legend: ['Points ELO']
+                      }}
+                      width={screenWidth - 88}
+                      height={220}
+                      chartConfig={{
+                        backgroundColor: '#ffffff',
+                        backgroundGradientFrom: '#ffffff',
+                        backgroundGradientTo: '#ffffff',
+                        decimalPlaces: 0,
+                        color: (opacity = 1) => `rgba(111, 111, 111, ${opacity})`,
+                        labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
+                        style: {
+                          borderRadius: 16
+                        },
+                        propsForDots: {
+                          r: '4',
+                          strokeWidth: '2',
+                          stroke: '#f97316'
+                        },
+                        propsForBackgroundLines: {
+                          strokeDasharray: '',
+                          stroke: '#e5e7eb',
+                          strokeWidth: 1
+                        }
+                      }}
+                      bezier
+                      style={styles.chart}
+                      withInnerLines={true}
+                      withOuterLines={false}
+                      withVerticalLabels={true}
+                      withHorizontalLabels={true}
+                      withDots={true}
+                      withShadow={false}
+                    />
+                  ) : (
+                    <PointsEvolutionChart 
+                      data={performanceHistory.points} 
+                      width={screenWidth - 88} 
+                      height={220} 
+                    />
+                  )}
+                </View>
+              ) : (
+                <View style={[styles.chartPlaceholder, { marginTop: 24 }]}>
+                  <Ionicons name="trophy-outline" size={48} color="#9ca3af" />
+                  <Text style={styles.chartPlaceholderText}>
+                    Aucune donnée de points disponible
+                  </Text>
+                  <Text style={styles.chartPlaceholderSubtext}>
+                    Jouez des matchs pour voir l'évolution de vos points
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         )}
@@ -582,16 +908,184 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 16,
   },
+  chartWrapper: {
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  chart: {
+    marginVertical: 8,
+    borderRadius: 16,
+  },
+  chartLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 12,
+    gap: 16,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
   chartPlaceholder: {
     height: 200,
     backgroundColor: '#f3f4f6',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 20,
   },
   chartPlaceholderText: {
     color: '#6b7280',
     fontSize: 14,
+    fontWeight: '600',
+    marginTop: 12,
+  },
+  chartPlaceholderSubtext: {
+    color: '#9ca3af',
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  simpleChartContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  simpleChart: {
+    width: '100%',
+    height: 220,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    padding: 16,
+  },
+  chartSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  chartArea: {
+    height: 140,
+    position: 'relative',
+    marginBottom: 40,
+  },
+  gridLine: {
+    position: 'absolute',
+    left: 40,
+    right: 0,
+    height: 1,
+    backgroundColor: '#e5e7eb',
+  },
+  gridLineVertical: {
+    position: 'absolute',
+    top: 0,
+    bottom: 40,
+    width: 1,
+    backgroundColor: '#e5e7eb',
+  },
+  scatterPoint: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#f97316',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  scatterPointInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#ffffff',
+    alignSelf: 'center',
+    marginTop: 1,
+  },
+  pointMarker: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#f97316',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  lineSegment: {
+    position: 'absolute',
+    backgroundColor: '#f97316',
+    height: 2,
+    transformOrigin: '0 0',
+  },
+  lineConnector: {
+    position: 'absolute',
+  },
+  yLabels: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    height: 140,
+    width: 40,
+  },
+  yLabel: {
+    position: 'absolute',
+    fontSize: 10,
+    color: '#6b7280',
+    textAlign: 'right',
+    width: 40,
+  },
+  xLabels: {
+    position: 'absolute',
+    bottom: 0,
+    left: 40,
+    right: 0,
+    height: 40,
+  },
+  xLabel: {
+    position: 'absolute',
+    fontSize: 9,
+    color: '#6b7280',
+    textAlign: 'center',
+    width: 40,
+  },
+  yAxisLabel: {
+    position: 'absolute',
+    left: 0,
+    top: 60,
+    fontSize: 10,
+    color: '#6b7280',
+    fontWeight: '600',
+    transform: [{ rotate: '-90deg' }],
+  },
+  xAxisLabel: {
+    position: 'absolute',
+    bottom: 10,
+    left: '50%',
+    marginLeft: -50,
+    fontSize: 10,
+    color: '#6b7280',
+    fontWeight: '600',
+    width: 100,
+    textAlign: 'center',
   },
   availableTitle: {
     fontSize: 20,

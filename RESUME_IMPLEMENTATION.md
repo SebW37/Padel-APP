@@ -84,3 +84,4 @@
 - Les points de ligue doivent être mis à jour séparément (à implémenter)
 - Le classement de ligue est basé sur les victoires, pas sur les points ELO
 
+

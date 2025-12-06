@@ -12,3 +12,4 @@ SELECT
 FROM pg_trigger
 WHERE tgname = 'match_validated_stats_update';
 
+

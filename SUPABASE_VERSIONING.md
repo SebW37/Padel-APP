@@ -110,3 +110,4 @@ Pour synchroniser le schéma local avec Supabase :
 - Les migrations sont appliquées manuellement via le Dashboard Supabase
 - Tous les scripts SQL sont versionnés dans Git pour traçabilité
 
+

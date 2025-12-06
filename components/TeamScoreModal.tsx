@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getJoueurs, completeDefiWithMatch } from '@/lib/supabase-rn';
+import { getJoueurs, completeDefiWithMatch, supabase } from '@/lib/supabase-rn';
 import type { Joueur } from '@/lib/supabase-rn';
 
 interface TeamScoreModalProps {
@@ -26,6 +26,8 @@ export default function TeamScoreModal({ visible, defiId, expediteurId, destinat
   const [joueurs, setJoueurs] = useState<Joueur[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [defiType, setDefiType] = useState<string>('Simple');
+  const [isPaireFixe, setIsPaireFixe] = useState(false);
 
   const [equipe1Joueur1, setEquipe1Joueur1] = useState<string>('');
   const [equipe1Joueur2, setEquipe1Joueur2] = useState<string>('');
@@ -46,6 +48,7 @@ export default function TeamScoreModal({ visible, defiId, expediteurId, destinat
   useEffect(() => {
     if (visible) {
       loadJoueurs();
+      loadDefiInfo();
       if (expediteurId && destinataireId) {
         setEquipe1Joueur1(expediteurId);
         setEquipe2Joueur1(destinataireId);
@@ -53,8 +56,67 @@ export default function TeamScoreModal({ visible, defiId, expediteurId, destinat
     } else {
       // Réinitialiser la recherche quand le modal se ferme
       setPickerSearch('');
+      setDefiType('Simple');
+      setIsPaireFixe(false);
     }
-  }, [visible, expediteurId, destinataireId]);
+  }, [visible, expediteurId, destinataireId, defiId]);
+
+  const loadDefiInfo = async () => {
+    try {
+      // Récupérer le défi avec son ligue_id
+      const { data: defiData, error: defiError } = await supabase
+        .from('defis')
+        .select('id, ligue_id')
+        .eq('id', defiId)
+        .maybeSingle();
+
+      if (defiError) {
+        console.error('Erreur chargement défi:', defiError);
+        setDefiType('Simple');
+        setIsPaireFixe(false);
+        return;
+      }
+
+      // Si le défi est lié à une ligue, récupérer les infos de la ligue
+      if (defiData?.ligue_id) {
+        const { data: ligueData, error: ligueError } = await supabase
+          .from('ligues')
+          .select('id, nom, format')
+          .eq('id', defiData.ligue_id)
+          .maybeSingle();
+
+        if (ligueError) {
+          console.error('Erreur chargement ligue:', ligueError);
+          setDefiType('Simple');
+          setIsPaireFixe(false);
+          return;
+        }
+
+        if (ligueData) {
+          if (ligueData.format === 'paires_fixes') {
+            setDefiType('Ligue par paire');
+            setIsPaireFixe(true);
+          } else if (ligueData.format === 'americano') {
+            setDefiType('Ligue Americano');
+            setIsPaireFixe(false);
+          } else {
+            setDefiType('Ligue');
+            setIsPaireFixe(false);
+          }
+        } else {
+          setDefiType('Simple');
+          setIsPaireFixe(false);
+        }
+      } else {
+        setDefiType('Simple');
+        setIsPaireFixe(false);
+      }
+    } catch (error) {
+      console.error('Erreur chargement info défi:', error);
+      setDefiType('Simple');
+      setIsPaireFixe(false);
+    }
+  };
 
   const loadJoueurs = async () => {
     setLoading(true);
@@ -284,7 +346,18 @@ export default function TeamScoreModal({ visible, defiId, expediteurId, destinat
       <View style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>Configuration du match</Text>
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.title}>Configuration du match</Text>
+              <View style={styles.defiTypeBadge}>
+                <Ionicons 
+                  name={isPaireFixe ? "lock-closed" : "trophy"} 
+                  size={14} 
+                  color={isPaireFixe ? "#ef4444" : "#f97316"} 
+                  style={styles.defiTypeIcon}
+                />
+                <Text style={styles.defiTypeText}>{defiType}</Text>
+              </View>
+            </View>
             <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={24} color="#111827" />
             </TouchableOpacity>
@@ -294,39 +367,64 @@ export default function TeamScoreModal({ visible, defiId, expediteurId, destinat
             <ActivityIndicator size="large" color="#f97316" style={styles.loader} />
           ) : (
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+              {isPaireFixe && (
+                <View style={styles.paireFixeWarning}>
+                  <Ionicons name="information-circle" size={18} color="#ef4444" />
+                  <Text style={styles.paireFixeWarningText}>
+                    Les joueurs sont bloqués pour les ligues par paire. Les équipes sont prédéfinies.
+                  </Text>
+                </View>
+              )}
+
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Équipe 1</Text>
                 <TouchableOpacity
-                  style={styles.input}
-                  onPress={() => setShowEquipe1Joueur1Picker(true)}
+                  style={[styles.input, isPaireFixe && styles.inputDisabled]}
+                  onPress={() => !isPaireFixe && setShowEquipe1Joueur1Picker(true)}
+                  disabled={isPaireFixe}
                 >
-                  <Text style={styles.inputText}>{getJoueurName(equipe1Joueur1)}</Text>
-                  <Ionicons name="chevron-down" size={20} color="#9ca3af" />
+                  <Text style={[styles.inputText, isPaireFixe && styles.inputTextDisabled]}>
+                    {getJoueurName(equipe1Joueur1)}
+                  </Text>
+                  {!isPaireFixe && <Ionicons name="chevron-down" size={20} color="#9ca3af" />}
+                  {isPaireFixe && <Ionicons name="lock-closed" size={18} color="#9ca3af" />}
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.input}
-                  onPress={() => setShowEquipe1Joueur2Picker(true)}
+                  style={[styles.input, isPaireFixe && styles.inputDisabled]}
+                  onPress={() => !isPaireFixe && setShowEquipe1Joueur2Picker(true)}
+                  disabled={isPaireFixe}
                 >
-                  <Text style={styles.inputText}>{getJoueurName(equipe1Joueur2)}</Text>
-                  <Ionicons name="chevron-down" size={20} color="#9ca3af" />
+                  <Text style={[styles.inputText, isPaireFixe && styles.inputTextDisabled]}>
+                    {getJoueurName(equipe1Joueur2)}
+                  </Text>
+                  {!isPaireFixe && <Ionicons name="chevron-down" size={20} color="#9ca3af" />}
+                  {isPaireFixe && <Ionicons name="lock-closed" size={18} color="#9ca3af" />}
                 </TouchableOpacity>
               </View>
 
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Équipe 2</Text>
                 <TouchableOpacity
-                  style={styles.input}
-                  onPress={() => setShowEquipe2Joueur1Picker(true)}
+                  style={[styles.input, isPaireFixe && styles.inputDisabled]}
+                  onPress={() => !isPaireFixe && setShowEquipe2Joueur1Picker(true)}
+                  disabled={isPaireFixe}
                 >
-                  <Text style={styles.inputText}>{getJoueurName(equipe2Joueur1)}</Text>
-                  <Ionicons name="chevron-down" size={20} color="#9ca3af" />
+                  <Text style={[styles.inputText, isPaireFixe && styles.inputTextDisabled]}>
+                    {getJoueurName(equipe2Joueur1)}
+                  </Text>
+                  {!isPaireFixe && <Ionicons name="chevron-down" size={20} color="#9ca3af" />}
+                  {isPaireFixe && <Ionicons name="lock-closed" size={18} color="#9ca3af" />}
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.input}
-                  onPress={() => setShowEquipe2Joueur2Picker(true)}
+                  style={[styles.input, isPaireFixe && styles.inputDisabled]}
+                  onPress={() => !isPaireFixe && setShowEquipe2Joueur2Picker(true)}
+                  disabled={isPaireFixe}
                 >
-                  <Text style={styles.inputText}>{getJoueurName(equipe2Joueur2)}</Text>
-                  <Ionicons name="chevron-down" size={20} color="#9ca3af" />
+                  <Text style={[styles.inputText, isPaireFixe && styles.inputTextDisabled]}>
+                    {getJoueurName(equipe2Joueur2)}
+                  </Text>
+                  {!isPaireFixe && <Ionicons name="chevron-down" size={20} color="#9ca3af" />}
+                  {isPaireFixe && <Ionicons name="lock-closed" size={18} color="#9ca3af" />}
                 </TouchableOpacity>
               </View>
 
@@ -488,10 +586,53 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
+  headerTitleContainer: {
+    flex: 1,
+  },
   title: {
     fontSize: 20,
     fontWeight: '700',
     color: '#111827',
+    marginBottom: 8,
+  },
+  defiTypeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  defiTypeIcon: {
+    marginRight: 4,
+  },
+  defiTypeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#92400e',
+  },
+  paireFixeWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fee2e2',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    gap: 8,
+  },
+  paireFixeWarningText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#991b1b',
+    fontWeight: '500',
+  },
+  inputDisabled: {
+    backgroundColor: '#f3f4f6',
+    opacity: 0.7,
+  },
+  inputTextDisabled: {
+    color: '#6b7280',
   },
   content: {
     padding: 24,

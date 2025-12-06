@@ -71,3 +71,4 @@ WHERE j.nom_complet = 'Test User 2';
 -- 4. Compter le nombre total de matchs
 SELECT COUNT(*) as total_matchs FROM matchs WHERE statut = 'valide';
 
+

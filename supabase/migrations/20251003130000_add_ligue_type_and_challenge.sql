@@ -37,3 +37,4 @@ CREATE INDEX IF NOT EXISTS idx_defis_ligue_id ON defis(ligue_id);
 COMMENT ON COLUMN ligues.type_ligue IS 'Type de ligue: manuelle (joueurs créent les matchs) ou automatique (matchs créés automatiquement)';
 COMMENT ON COLUMN defis.ligue_id IS 'ID de la ligue si le défi est lié à une ligue';
 
+

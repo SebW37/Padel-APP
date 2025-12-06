@@ -77,3 +77,4 @@
 - Les ligues manuelles permettent aux joueurs de créer des défis librement
 - Les ligues automatiques génèrent des matchs selon un calendrier (à implémenter)
 
+

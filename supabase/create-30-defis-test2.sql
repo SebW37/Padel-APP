@@ -221,3 +221,4 @@ FROM defis
 WHERE expediteur_id = (SELECT id FROM auth.users WHERE email = 'test2@padel.com')
    OR destinataire_id = (SELECT id FROM auth.users WHERE email = 'test2@padel.com');
 
+

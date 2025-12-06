@@ -48,3 +48,4 @@ CREATE POLICY "Authenticated users can view all ligues_joueurs"
 
 SELECT 'Politiques RLS modifiées pour permettre l\'accès aux utilisateurs authentifiés' as status;
 
+
